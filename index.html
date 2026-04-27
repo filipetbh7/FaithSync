@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Plano de Leitura Bíblica Familiar</title>
+<style>
+  :root {
+    --parchment-dark: #1a1208;
+    --parchment-mid: #2c1f0e;
+    --parchment-warm: #3d2b14;
+    --ink-gold: #c9a84c;
+    --ink-gold-bright: #e8c76a;
+    --ink-gold-dim: #7a6030;
+    --ink-red: #8b2020;
+    --ink-red-bright: #c44040;
+    --text-primary: #e8dcc8;
+    --text-secondary: #b8a888;
+    --text-dim: #7a6e5a;
+    --border-ornate: #5a4020;
+    --border-gold: #8a6830;
+    --accent-blue: #4a7a9b;
+    --accent-teal: #3a8a7a;
+    --glow-gold: rgba(201,168,76,0.15);
+    --status-none: #3a3020;
+    --status-progress: #7a6030;
+    --status-done: #3a6a3a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background-color: var(--parchment-dark);
+    color: var(--text-primary);
+    font-family: 'Palatino Linotype','Palatino','Book Antiqua',Georgia,'Times New Roman',serif;
+    font-size: 16px;
+    line-height: 1.7;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(139,32,32,0.04) 0%, transparent 50%);
+  }
+
+  /* ── SHARED HEADER ── */
+  .site-header {
+    text-align: center;
+    padding: 2.5rem 2rem 1.8rem;
+    position: relative;
+    border-bottom: 1px solid var(--border-ornate);
+  }
+  .site-header::before {
+    content:'';
+    position:absolute;
+    bottom:-1px; left:50%; transform:translateX(-50%);
+    width:60%; height:1px;
+    background:linear-gradient(90deg,transparent,var(--ink-gold),transparent);
+  }
+  .header-ornament { color:var(--ink-gold-dim); font-size:0.7rem; letter-spacing:0.4em; text-transform:uppercase; margin-bottom:0.6rem; }
+  .site-title { font-size:clamp(1.3rem,4vw,2.2rem); color:var(--ink-gold-bright); font-weight:700; line-height:1.2; text-shadow:0 0 40px rgba(201,168,76,0.3); letter-spacing:0.05em; }
+  .site-subtitle { font-size:0.78rem; color:var(--text-dim); letter-spacing:0.22em; margin-top:0.4rem; }
+
+  /* ── HEADER NAV BAR (week view) ── */
+  .header-nav {
+    display:flex; align-items:center; justify-content:center; gap:1.5rem;
+    padding:0.6rem 2rem;
+    border-bottom:1px solid var(--border-ornate);
+    background:rgba(0,0,0,0.15);
+  }
+  .hnav-btn {
+    background:none; border:none; color:var(--ink-gold-dim);
+    font-family:inherit; font-size:0.72rem; letter-spacing:0.15em;
+    cursor:pointer; padding:0.3rem 0.6rem; text-transform:uppercase;
+    transition:color 0.2s;
+    display:flex; align-items:center; gap:0.4rem;
+  }
+  .hnav-btn:hover { color:var(--ink-gold); }
+  .hnav-btn:disabled { opacity:0.25; cursor:default; }
+  .hnav-index-btn {
+    background:none; border:1px solid var(--border-ornate); color:var(--ink-gold-dim);
+    font-family:inherit; font-size:0.68rem; letter-spacing:0.2em;
+    cursor:pointer; padding:0.35rem 1rem; text-transform:uppercase;
+    transition:all 0.2s;
+  }
+  .hnav-index-btn:hover { border-color:var(--ink-gold); color:var(--ink-gold); background:var(--glow-gold); }
+  .hnav-week-label { font-size:0.8rem; color:var(--text-secondary); min-width:80px; text-align:center; }
+
+  /* ── PROGRESS SECTION ── */
+  .progress-section { max-width:900px; margin:1.8rem auto 0; padding:0 2rem; }
+  .progress-label { display:flex; justify-content:space-between; font-size:0.7rem; letter-spacing:0.15em; color:var(--text-dim); margin-bottom:0.45rem; }
+  .progress-track { height:5px; background:var(--parchment-warm); border-radius:3px; overflow:hidden; border:1px solid var(--border-ornate); }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--ink-gold-dim),var(--ink-gold-bright)); border-radius:3px; transition:width 0.8s ease; box-shadow:0 0 8px rgba(201,168,76,0.4); }
+  .progress-stats { display:flex; gap:2rem; margin-top:1rem; flex-wrap:wrap; }
+  .stat-item { display:flex; flex-direction:column; gap:0.1rem; }
+  .stat-value { font-size:1.25rem; color:var(--ink-gold); font-weight:700; }
+  .stat-label { font-size:0.7rem; color:var(--text-dim); letter-spacing:0.08em; }
+
+  .stats-divider { height:1px; background:linear-gradient(90deg,transparent,var(--border-ornate),transparent); margin:1rem 0; }
+
+  .progress-stats-2 { display:flex; gap:0; flex-wrap:wrap; }
+  .stat-item-2 { flex:1; min-width:110px; padding:0.5rem 0.8rem; border-left:1px solid var(--border-ornate); }
+  .stat-item-2:first-child { border-left:none; padding-left:0; }
+  .stat-bar-wrap { display:flex; align-items:center; gap:0.5rem; margin-top:0.15rem; }
+  .stat-bar-mini { flex:1; height:3px; background:var(--parchment-warm); border-radius:2px; overflow:hidden; }
+  .stat-bar-mini-fill { height:100%; border-radius:2px; transition:width 0.8s ease; }
+  .fill-gold { background:linear-gradient(90deg,var(--ink-gold-dim),var(--ink-gold)); }
+  .fill-blue { background:linear-gradient(90deg,#3a5a7a,var(--accent-blue)); }
+  .fill-teal { background:linear-gradient(90deg,#2a6a5a,var(--accent-teal)); }
+  .stat-label-2 { font-size:0.6rem; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
+  .stat-pct { font-size:0.7rem; color:var(--text-secondary); white-space:nowrap; }
+
+  /* Book verse banner */
+  .book-verse-banner { margin:1rem 0 0; padding:0.8rem 1.2rem; border:1px solid var(--border-ornate); border-left:3px solid var(--ink-gold-dim); background:rgba(0,0,0,0.15); display:flex; align-items:flex-start; gap:1rem; }
+  .book-badge { font-size:0.58rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-gold-dim); white-space:nowrap; padding-top:0.2rem; flex-shrink:0; }
+  .book-verse-text { font-size:0.83rem; font-style:italic; color:var(--text-secondary); line-height:1.5; }
+  .book-verse-ref { font-size:0.7rem; color:var(--ink-gold-dim); margin-top:0.15rem; font-style:normal; }
+
+  /* ── VIEW SWITCHING ── */
+  .view { display:none; }
+  .view.active { display:block; }
+
+  /* ══════════════════════════════════
+     INDEX VIEW
+  ══════════════════════════════════ */
+  .index-intro {
+    max-width:900px; margin:1.5rem auto 0; padding:0 2rem;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.8rem;
+  }
+  .index-intro-text { font-size:0.82rem; color:var(--text-dim); font-style:italic; }
+  .legend { display:flex; gap:1.2rem; flex-wrap:wrap; }
+  .legend-item { display:flex; align-items:center; gap:0.4rem; font-size:0.68rem; color:var(--text-dim); letter-spacing:0.05em; }
+  .legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .legend-dot.none { background:var(--status-none); border:1px solid #5a5030; }
+  .legend-dot.progress { background:var(--ink-gold-dim); }
+  .legend-dot.done { background:#4a8a4a; }
+
+  .index-grid {
+    max-width:900px; margin:1.2rem auto 3rem; padding:0 2rem;
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap:0.7rem;
+  }
+
+  .week-card {
+    background:var(--parchment-mid);
+    border:1px solid var(--border-ornate);
+    padding:1rem 1.1rem;
+    cursor:pointer;
+    transition:all 0.2s;
+    position:relative;
+    overflow:hidden;
+  }
+  .week-card::after {
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--ink-gold-dim),transparent);
+    opacity:0;
+    transition:opacity 0.2s;
+  }
+  .week-card:hover { border-color:var(--border-gold); transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,0.3); }
+  .week-card:hover::after { opacity:1; }
+  .week-card.has-content { border-color:var(--border-gold); }
+  .week-card.has-content::after { opacity:0.5; }
+  .week-card.status-done { border-color:#3a6a3a; }
+  .week-card.status-done::after { background:linear-gradient(90deg,transparent,#4a8a4a,transparent); opacity:1; }
+  .week-card.status-progress { border-color:var(--ink-gold-dim); }
+  .week-card.status-progress::after { opacity:1; }
+
+  .wc-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.4rem; }
+  .wc-num { font-size:0.62rem; letter-spacing:0.2em; color:var(--text-dim); text-transform:uppercase; }
+  .wc-status { display:flex; align-items:center; gap:0.3rem; }
+  .status-dot { width:7px; height:7px; border-radius:50%; }
+  .status-dot.none { background:var(--status-none); border:1px solid #5a5030; }
+  .status-dot.progress { background:var(--ink-gold-dim); box-shadow:0 0 4px rgba(201,168,76,0.4); }
+  .status-dot.done { background:#4a8a4a; box-shadow:0 0 4px rgba(74,138,74,0.4); }
+  .status-label { font-size:0.58rem; color:var(--text-dim); letter-spacing:0.08em; }
+
+  .wc-dates { font-size:0.75rem; color:var(--text-secondary); font-style:italic; margin-bottom:0.3rem; }
+  .wc-range { font-size:0.82rem; color:var(--text-primary); line-height:1.3; font-weight:500; }
+  .wc-block { font-size:0.65rem; color:var(--ink-gold-dim); letter-spacing:0.1em; margin-top:0.4rem; }
+
+  .wc-arrow {
+    position:absolute; right:0.8rem; bottom:0.8rem;
+    font-size:0.75rem; color:var(--ink-gold-dim);
+    opacity:0; transition:opacity 0.2s;
+  }
+  .week-card:hover .wc-arrow { opacity:1; }
+
+  .index-block-label {
+    max-width:900px; margin:1.5rem auto 0.4rem; padding:0 2rem;
+    font-size:0.62rem; letter-spacing:0.3em; color:var(--ink-gold-dim);
+    text-transform:uppercase;
+    display:flex; align-items:center; gap:0.8rem;
+  }
+  .index-block-label::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border-ornate),transparent); }
+
+  /* ══════════════════════════════════
+     WEEK VIEW
+  ══════════════════════════════════ */
+  .week-header-bar {
+    max-width:900px; margin:0 auto;
+    padding:1.2rem 2rem 0;
+    text-align:center;
+  }
+  .week-title-main { font-size:clamp(1rem,3vw,1.4rem); color:var(--ink-gold-bright); font-weight:700; letter-spacing:0.05em; }
+  .week-title-sub { font-size:0.8rem; color:var(--text-dim); font-style:italic; margin-top:0.2rem; }
+
+  .main-content { max-width:900px; margin:0 auto; padding:1.5rem 2rem; }
+
+  /* Section headings */
+  .section-heading { font-size:0.66rem; letter-spacing:0.35em; text-transform:uppercase; color:var(--ink-gold-dim); margin-bottom:0.9rem; display:flex; align-items:center; gap:1rem; }
+  .section-heading::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border-ornate),transparent); }
+
+  /* Day cards */
+  .days-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:0.9rem; margin-bottom:2rem; }
+  .day-card { background:var(--parchment-mid); border:1px solid var(--border-ornate); padding:1.1rem; position:relative; transition:all 0.25s; cursor:pointer; }
+  .day-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--ink-gold-dim),transparent); opacity:0; transition:opacity 0.25s; }
+  .day-card:hover { border-color:var(--border-gold); }
+  .day-card:hover::before { opacity:1; }
+  .day-card.completed { background:rgba(201,168,76,0.06); border-color:var(--ink-gold-dim); }
+  .day-card.completed::before { opacity:1; }
+  .day-card.today { border-color:var(--ink-gold); box-shadow:0 0 20px rgba(201,168,76,0.12),inset 0 0 20px rgba(201,168,76,0.03); }
+  .day-card.today::before { opacity:1; background:linear-gradient(90deg,transparent,var(--ink-gold),transparent); }
+  .day-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.7rem; }
+  .day-label { font-size:0.63rem; letter-spacing:0.2em; color:var(--text-dim); text-transform:uppercase; }
+  .day-date { font-size:0.7rem; color:var(--text-dim); font-style:italic; }
+  .day-reading { font-size:1rem; color:var(--text-primary); font-weight:500; margin-bottom:0.35rem; line-height:1.3; }
+  .day-context { font-size:0.78rem; color:var(--text-secondary); font-style:italic; line-height:1.4; }
+  .day-badge { display:inline-block; font-size:0.56rem; letter-spacing:0.12em; padding:0.12rem 0.45rem; border:1px solid var(--ink-gold-dim); color:var(--ink-gold-dim); margin-top:0.5rem; text-transform:uppercase; }
+  .day-badge.today-badge { border-color:var(--ink-gold); color:var(--ink-gold); background:rgba(201,168,76,0.08); }
+  .day-check { width:17px; height:17px; border:1px solid var(--border-gold); display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; transition:all 0.2s; margin-top:2px; }
+  .day-check:hover { border-color:var(--ink-gold); background:var(--glow-gold); }
+  .day-check.checked { background:var(--ink-gold); border-color:var(--ink-gold); }
+  .day-check.checked::after { content:'✓'; color:var(--parchment-dark); font-size:0.65rem; font-weight:700; }
+
+  /* Complement card */
+  .complement-card { background:var(--parchment-mid); border:1px solid var(--border-gold); padding:1.8rem; margin-bottom:2rem; position:relative; box-shadow:0 0 30px rgba(201,168,76,0.06); }
+  .complement-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--ink-gold),transparent); }
+  .complement-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.2rem; flex-wrap:wrap; gap:0.5rem; }
+  .complement-title { font-size:0.95rem; color:var(--ink-gold-bright); letter-spacing:0.08em; }
+  .complement-date { font-size:0.75rem; color:var(--text-dim); font-style:italic; }
+  .complement-intro { font-size:0.87rem; color:var(--text-secondary); font-style:italic; margin-bottom:1.3rem; padding-bottom:1.2rem; border-bottom:1px solid var(--border-ornate); line-height:1.6; }
+  .resources-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1rem; }
+  .resource-block { padding:0.9rem 1rem; border:1px solid var(--border-ornate); background:rgba(0,0,0,0.2); position:relative; }
+  .resource-block::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; }
+  .resource-block.thompson::before { background:var(--ink-gold); }
+  .resource-block.scofield::before { background:var(--ink-red-bright); }
+  .resource-block.atlas::before { background:var(--accent-teal); }
+  .resource-block.escatologia::before { background:var(--accent-blue); }
+  .resource-block.personagens::before { background:#9a6abf; }
+  .resource-block.dicionario::before { background:#7a9a6a; }
+  .resource-block.judaica::before { background:#c4a44a; }
+  .resource-block.extra::before { background:var(--text-dim); }
+  .resource-source { font-size:0.58rem; letter-spacing:0.25em; text-transform:uppercase; margin-bottom:0.45rem; }
+  .resource-block.thompson .resource-source { color:var(--ink-gold); }
+  .resource-block.scofield .resource-source { color:var(--ink-red-bright); }
+  .resource-block.atlas .resource-source { color:var(--accent-teal); }
+  .resource-block.escatologia .resource-source { color:var(--accent-blue); }
+  .resource-block.personagens .resource-source { color:#9a6abf; }
+  .resource-block.dicionario .resource-source { color:#7a9a6a; }
+  .resource-block.judaica .resource-source { color:#c4a44a; }
+  .resource-block.extra .resource-source { color:var(--text-secondary); }
+  .resource-content { font-size:0.82rem; color:var(--text-secondary); line-height:1.55; }
+  .resource-content ul { list-style:none; padding:0; }
+  .resource-content ul li { padding-left:1rem; position:relative; margin-bottom:0.28rem; }
+  .resource-content ul li::before { content:'›'; position:absolute; left:0; color:var(--ink-gold-dim); }
+
+  /* Visual */
+  .visual-container { background:var(--parchment-mid); border:1px solid var(--border-ornate); padding:1.2rem; overflow:hidden; margin-bottom:2rem; }
+  .visual-title { font-size:0.72rem; letter-spacing:0.2em; color:var(--ink-gold-dim); text-transform:uppercase; margin-bottom:1rem; text-align:center; }
+
+  /* Reflection */
+  .reflection-card { background:var(--parchment-mid); border:1px solid var(--border-ornate); padding:1.4rem 1.8rem; margin-bottom:2rem; position:relative; }
+  .reflection-quote { font-size:1.05rem; font-style:italic; color:var(--text-primary); line-height:1.7; margin-bottom:0.7rem; padding-left:1.8rem; }
+  .reflection-ornament { position:absolute; top:0.8rem; left:1rem; font-size:2.5rem; color:var(--ink-gold-dim); opacity:0.3; line-height:1; }
+  .reflection-ref { font-size:0.77rem; color:var(--text-dim); font-style:italic; padding-left:1.8rem; margin-bottom:0.9rem; }
+  .reflection-question { font-size:0.83rem; color:var(--ink-gold); letter-spacing:0.05em; }
+
+  /* Notes */
+  .notes-textarea { width:100%; min-height:110px; background:var(--parchment-mid); border:1px solid var(--border-ornate); color:var(--text-primary); font-family:inherit; font-size:0.92rem; padding:0.9rem 1.1rem; resize:vertical; line-height:1.7; transition:border-color 0.2s; outline:none; }
+  .notes-textarea:focus { border-color:var(--border-gold); }
+  .notes-textarea::placeholder { color:var(--text-dim); font-style:italic; }
+
+  /* Actions */
+  .actions-bar { display:flex; gap:0.8rem; flex-wrap:wrap; margin-bottom:3rem; padding-top:1.3rem; border-top:1px solid var(--border-ornate); }
+  .action-btn { background:none; border:1px solid var(--border-gold); color:var(--ink-gold); font-family:inherit; font-size:0.66rem; letter-spacing:0.2em; padding:0.55rem 1.2rem; cursor:pointer; text-transform:uppercase; transition:all 0.2s; }
+  .action-btn:hover { background:var(--glow-gold); border-color:var(--ink-gold-bright); }
+  .action-btn.danger { border-color:var(--ink-red); color:var(--ink-red-bright); }
+  .action-btn.danger:hover { background:rgba(139,32,32,0.15); }
+
+  /* Placeholder */
+  .placeholder-box { text-align:center; padding:3.5rem 2rem; border:1px solid var(--border-ornate); background:var(--parchment-mid); }
+
+  /* Toast */
+  .toast { position:fixed; bottom:2rem; right:2rem; background:var(--parchment-warm); border:1px solid var(--ink-gold-dim); color:var(--text-primary); font-family:inherit; font-size:0.7rem; letter-spacing:0.12em; padding:0.75rem 1.3rem; opacity:0; transform:translateY(10px); transition:all 0.3s; pointer-events:none; z-index:999; max-width:260px; }
+  .toast.show { opacity:1; transform:translateY(0); }
+
+  footer { text-align:center; padding:2rem; font-size:0.7rem; color:var(--text-dim); border-top:1px solid var(--border-ornate); font-style:italic; letter-spacing:0.05em; }
+
+  /* Animations */
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── VIEW-DEPENDENT STATS ── */
+  /* Index: hide book stat and verse, make AT+NT wider */
+  [data-view='index'] .stat-item-book { display:none; }
+  [data-view='index'] .book-verse-banner { display:none; }
+  [data-view='index'] .stat-item-2 { flex:1; min-width:140px; }
+
+  /* Week: show everything */
+  [data-view='week'] .stat-item-book { display:flex; }
+  [data-view='week'] .book-verse-banner { display:flex; }
+
+  /* Notes view */
+  [data-view='notes'] .stat-item-book { display:none; }
+  [data-view='notes'] .book-verse-banner { display:none; }
+  [data-view='notes'] .stat-item-2 { flex:1; min-width:140px; }
+
+  /* ── NOTES VIEW ── */
+  .notes-view-header {
+    max-width:900px; margin:1.5rem auto 0; padding:0 2rem;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.8rem;
+  }
+  .notes-view-title {
+    font-size:1rem; color:var(--ink-gold-bright); font-weight:700; letter-spacing:0.08em;
+  }
+  .notes-view-subtitle {
+    font-size:0.75rem; color:var(--text-dim); font-style:italic; margin-top:0.15rem;
+  }
+  .notes-index-btn {
+    background:none; border:1px solid var(--border-ornate); color:var(--ink-gold-dim);
+    font-family:inherit; font-size:0.66rem; letter-spacing:0.2em;
+    cursor:pointer; padding:0.35rem 1rem; text-transform:uppercase; transition:all 0.2s;
+  }
+  .notes-index-btn:hover { border-color:var(--ink-gold); color:var(--ink-gold); background:var(--glow-gold); }
+
+  .notes-list { max-width:900px; margin:1.5rem auto 3rem; padding:0 2rem; }
+
+  .notes-empty {
+    text-align:center; padding:3rem 2rem;
+    font-size:0.87rem; color:var(--text-dim); font-style:italic;
+    border:1px solid var(--border-ornate); background:var(--parchment-mid);
+  }
+
+  .note-entry {
+    margin-bottom:1.2rem;
+    border:1px solid var(--border-ornate);
+    background:var(--parchment-mid);
+    overflow:hidden;
+  }
+  .note-entry-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.75rem 1.1rem;
+    background:rgba(0,0,0,0.2);
+    border-bottom:1px solid var(--border-ornate);
+    flex-wrap:wrap; gap:0.4rem;
+    cursor:pointer;
+    transition:background 0.2s;
+  }
+  .note-entry-header:hover { background:rgba(201,168,76,0.06); }
+  .note-entry-meta { display:flex; flex-direction:column; gap:0.1rem; }
+  .note-entry-week { font-size:0.65rem; letter-spacing:0.2em; color:var(--ink-gold-dim); text-transform:uppercase; }
+  .note-entry-range { font-size:0.88rem; color:var(--text-primary); font-weight:500; }
+  .note-entry-dates { font-size:0.72rem; color:var(--text-dim); font-style:italic; }
+  .note-entry-link {
+    font-size:0.65rem; letter-spacing:0.15em; color:var(--ink-gold-dim);
+    text-transform:uppercase; cursor:pointer; white-space:nowrap;
+    padding:0.3rem 0.6rem; border:1px solid var(--border-ornate);
+    transition:all 0.2s; background:none; font-family:inherit;
+  }
+  .note-entry-link:hover { border-color:var(--ink-gold); color:var(--ink-gold); }
+  .note-entry-body {
+    padding:1rem 1.1rem;
+    font-size:0.9rem; color:var(--text-secondary);
+    line-height:1.7; white-space:pre-wrap;
+    border-left:3px solid var(--ink-gold-dim);
+  }
+  .fade-in { animation:fadeInUp 0.35s ease both; }
+
+  /* Responsive */
+  @media (max-width:600px) {
+    .days-grid { grid-template-columns:1fr; }
+    .resources-grid { grid-template-columns:1fr; }
+    .progress-stats { gap:1rem; }
+    .index-grid { grid-template-columns:1fr; }
+    .header-nav { gap:0.6rem; }
+    .hnav-btn { font-size:0.65rem; }
+  }
+  @media (min-width:601px) and (max-width:800px) {
+    .index-grid { grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ SHARED HEADER ══════════════════ -->
+<header class="site-header">
+  <div class="header-ornament">✦ Família ✦</div>
+  <h1 class="site-title">Plano de Leitura Bíblica</h1>
+  <p class="site-subtitle">Estudo em Família · Gênesis ao Apocalipse</p>
+</header>
+
+<!-- ══════════════════ PROGRESS (shared, always visible) ══════════════════ -->
+<div class="progress-section">
+  <div class="progress-label">
+    <span>Progresso Geral</span>
+    <span id="progress-pct">0%</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+  <div class="progress-stats">
+    <div class="stat-item">
+      <span class="stat-value" id="stat-weeks">0 / 87</span>
+      <span class="stat-label">Semanas concluídas</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-chapters">0 / 1189</span>
+      <span class="stat-label">Capítulos lidos</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="stat-streak">0</span>
+      <span class="stat-label">Dias seguidos</span>
+    </div>
+  </div>
+  <div class="stats-divider"></div>
+  <div class="progress-stats-2">
+    <div class="stat-item-2 stat-item-book">
+      <div class="stat-label-2">Livro Atual</div>
+      <div class="stat-bar-wrap">
+        <div class="stat-bar-mini"><div class="stat-bar-mini-fill fill-gold" id="bar-book" style="width:0%"></div></div>
+        <span class="stat-pct" id="pct-book">0%</span>
+      </div>
+      <div style="font-size:.76rem;color:var(--text-secondary);margin-top:.15rem" id="label-book">—</div>
+    </div>
+    <div class="stat-item-2">
+      <div class="stat-label-2">Velho Testamento</div>
+      <div class="stat-bar-wrap">
+        <div class="stat-bar-mini"><div class="stat-bar-mini-fill fill-blue" id="bar-at" style="width:0%"></div></div>
+        <span class="stat-pct" id="pct-at">0%</span>
+      </div>
+      <div style="font-size:.7rem;color:var(--text-dim);margin-top:.15rem">929 capítulos</div>
+    </div>
+    <div class="stat-item-2">
+      <div class="stat-label-2">Novo Testamento</div>
+      <div class="stat-bar-wrap">
+        <div class="stat-bar-mini"><div class="stat-bar-mini-fill fill-teal" id="bar-nt" style="width:0%"></div></div>
+        <span class="stat-pct" id="pct-nt">0%</span>
+      </div>
+      <div style="font-size:.7rem;color:var(--text-dim);margin-top:.15rem">260 capítulos</div>
+    </div>
+  </div>
+  <div class="book-verse-banner" id="book-verse-banner">
+    <div class="book-badge" id="book-badge">—</div>
+    <div>
+      <div class="book-verse-text" id="book-verse-text" style="font-style:italic;color:var(--text-dim)">Inicie a leitura para ver o versículo do livro atual.</div>
+      <div class="book-verse-ref" id="book-verse-ref"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ VIEW: INDEX ══════════════════ -->
+<div id="view-index" class="view active">
+  <div class="index-intro">
+    <div class="index-intro-text">87 semanas · Domingo a Sexta leitura · Sábado complementação</div>
+    <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap">
+      <button class="notes-index-btn" onclick="showNotes()" style="white-space:nowrap">✎ Anotações</button>
+      <div class="legend">
+      <div class="legend-item"><div class="legend-dot none"></div>Não iniciado</div>
+      <div class="legend-item"><div class="legend-dot progress"></div>Em andamento</div>
+      <div class="legend-item"><div class="legend-dot done"></div>Concluído</div>
+    </div>
+    </div>
+  </div>
+  <div id="index-grid-container"></div>
+</div>
+
+<!-- ══════════════════ VIEW: WEEK ══════════════════ -->
+<div id="view-week" class="view">
+  <!-- Week nav bar -->
+  <div class="header-nav">
+    <button class="hnav-btn" id="btn-prev" onclick="navWeek(-1)">← Anterior</button>
+    <button class="hnav-index-btn" onclick="showIndex()">≡ Índice</button>
+    <button class="hnav-index-btn" onclick="showNotes()" style="border-color:var(--border-ornate)">✎ Anotações</button>
+    <button class="hnav-btn" id="btn-next" onclick="navWeek(1)">Próxima →</button>
+  </div>
+  <div class="week-header-bar">
+    <div class="week-title-main" id="week-title-main">—</div>
+    <div class="week-title-sub" id="week-title-sub">—</div>
+  </div>
+  <main class="main-content" id="main-content"></main>
+</div>
+
+<!-- ══════════════════ VIEW: NOTES ══════════════════ -->
+<div id="view-notes" class="view">
+  <div class="notes-view-header">
+    <div>
+      <div class="notes-view-title">✎ Anotações do Plano</div>
+      <div class="notes-view-subtitle">Apenas leitura · Edite as anotações na página de cada semana</div>
+    </div>
+    <button class="notes-index-btn" onclick="showIndex()">≡ Índice</button>
+  </div>
+  <div class="notes-list" id="notes-list-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  Plano de Leitura Bíblica Familiar · Gênesis ao Apocalipse · 2026–2027<br>
+  Progresso salvo localmente · Use "Exportar Progresso" para backup
+</footer>
+
+<script>
+// ══════════════════════════════════════════════
+// CONSTANTS & DATA
+// ══════════════════════════════════════════════
+
+const TOTAL_CHAPTERS = 1189;
+const AT_CHAPTERS = 929;
+const NT_CHAPTERS = 260;
+const TOTAL_WEEKS = 87;
+const START_DATE = new Date(2026, 3, 27);
+
+const WEEKS_INDEX = [
+  { num:1, ds:new Date(2026,3,27), de:new Date(2026,4,3), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:2, ds:new Date(2026,4,4), de:new Date(2026,4,10), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:3, ds:new Date(2026,4,11), de:new Date(2026,4,17), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:4, ds:new Date(2026,4,18), de:new Date(2026,4,24), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:5, ds:new Date(2026,4,25), de:new Date(2026,4,31), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:6, ds:new Date(2026,5,1), de:new Date(2026,5,7), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:7, ds:new Date(2026,5,8), de:new Date(2026,5,14), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:8, ds:new Date(2026,5,15), de:new Date(2026,5,21), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:9, ds:new Date(2026,5,22), de:new Date(2026,5,28), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:10, ds:new Date(2026,5,29), de:new Date(2026,6,5), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:11, ds:new Date(2026,6,6), de:new Date(2026,6,12), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:12, ds:new Date(2026,6,13), de:new Date(2026,6,19), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:13, ds:new Date(2026,6,20), de:new Date(2026,6,26), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:14, ds:new Date(2026,6,27), de:new Date(2026,7,2), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:15, ds:new Date(2026,7,3), de:new Date(2026,7,9), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:16, ds:new Date(2026,7,10), de:new Date(2026,7,16), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:17, ds:new Date(2026,7,17), de:new Date(2026,7,23), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:18, ds:new Date(2026,7,24), de:new Date(2026,7,30), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:19, ds:new Date(2026,7,31), de:new Date(2026,8,6), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:20, ds:new Date(2026,8,7), de:new Date(2026,8,13), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:21, ds:new Date(2026,8,14), de:new Date(2026,8,20), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:22, ds:new Date(2026,8,21), de:new Date(2026,8,27), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:23, ds:new Date(2026,8,28), de:new Date(2026,9,4), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:24, ds:new Date(2026,9,5), de:new Date(2026,9,11), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:25, ds:new Date(2026,9,12), de:new Date(2026,9,18), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:26, ds:new Date(2026,9,19), de:new Date(2026,9,25), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:27, ds:new Date(2026,9,26), de:new Date(2026,10,1), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:28, ds:new Date(2026,10,2), de:new Date(2026,10,8), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:29, ds:new Date(2026,10,9), de:new Date(2026,10,15), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:30, ds:new Date(2026,10,16), de:new Date(2026,10,22), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:31, ds:new Date(2026,10,23), de:new Date(2026,10,29), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:32, ds:new Date(2026,10,30), de:new Date(2026,11,6), block:"Poéticos", hasContent:true, range:"Daniel 7 – Daniel 12" },
+  { num:33, ds:new Date(2026,11,7), de:new Date(2026,11,13), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:34, ds:new Date(2026,11,14), de:new Date(2026,11,20), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:35, ds:new Date(2026,11,21), de:new Date(2026,11,27), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:36, ds:new Date(2026,11,28), de:new Date(2027,0,3), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:37, ds:new Date(2027,0,4), de:new Date(2027,0,10), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:38, ds:new Date(2027,0,11), de:new Date(2027,0,17), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:39, ds:new Date(2027,0,18), de:new Date(2027,0,24), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:40, ds:new Date(2027,0,25), de:new Date(2027,0,31), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:41, ds:new Date(2027,1,1), de:new Date(2027,1,7), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:42, ds:new Date(2027,1,8), de:new Date(2027,1,14), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:43, ds:new Date(2027,1,15), de:new Date(2027,1,21), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:44, ds:new Date(2027,1,22), de:new Date(2027,1,28), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:45, ds:new Date(2027,2,1), de:new Date(2027,2,7), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:46, ds:new Date(2027,2,8), de:new Date(2027,2,14), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:47, ds:new Date(2027,2,15), de:new Date(2027,2,21), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:48, ds:new Date(2027,2,22), de:new Date(2027,2,28), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:49, ds:new Date(2027,2,29), de:new Date(2027,3,4), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:50, ds:new Date(2027,3,5), de:new Date(2027,3,11), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:51, ds:new Date(2027,3,12), de:new Date(2027,3,18), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:52, ds:new Date(2027,3,19), de:new Date(2027,3,25), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:53, ds:new Date(2027,3,26), de:new Date(2027,4,2), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:54, ds:new Date(2027,4,3), de:new Date(2027,4,9), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:55, ds:new Date(2027,4,10), de:new Date(2027,4,16), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:56, ds:new Date(2027,4,17), de:new Date(2027,4,23), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:57, ds:new Date(2027,4,24), de:new Date(2027,4,30), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:58, ds:new Date(2027,4,31), de:new Date(2027,5,6), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:59, ds:new Date(2027,5,7), de:new Date(2027,5,13), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:60, ds:new Date(2027,5,14), de:new Date(2027,5,20), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:61, ds:new Date(2027,5,21), de:new Date(2027,5,27), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:62, ds:new Date(2027,5,28), de:new Date(2027,6,4), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:63, ds:new Date(2027,6,5), de:new Date(2027,6,11), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:64, ds:new Date(2027,6,12), de:new Date(2027,6,18), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:65, ds:new Date(2027,6,19), de:new Date(2027,6,25), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:66, ds:new Date(2027,6,26), de:new Date(2027,7,1), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:67, ds:new Date(2027,7,2), de:new Date(2027,7,8), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:68, ds:new Date(2027,7,9), de:new Date(2027,7,15), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:69, ds:new Date(2027,7,16), de:new Date(2027,7,22), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:70, ds:new Date(2027,7,23), de:new Date(2027,7,29), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:71, ds:new Date(2027,7,30), de:new Date(2027,8,5), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:72, ds:new Date(2027,8,6), de:new Date(2027,8,12), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:73, ds:new Date(2027,8,13), de:new Date(2027,8,19), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:74, ds:new Date(2027,8,20), de:new Date(2027,8,26), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:75, ds:new Date(2027,8,27), de:new Date(2027,9,3), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:76, ds:new Date(2027,9,4), de:new Date(2027,9,10), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:77, ds:new Date(2027,9,11), de:new Date(2027,9,17), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:78, ds:new Date(2027,9,18), de:new Date(2027,9,24), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:79, ds:new Date(2027,9,25), de:new Date(2027,9,31), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:80, ds:new Date(2027,10,1), de:new Date(2027,10,7), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:81, ds:new Date(2027,10,8), de:new Date(2027,10,14), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:82, ds:new Date(2027,10,15), de:new Date(2027,10,21), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:83, ds:new Date(2027,10,22), de:new Date(2027,10,28), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:84, ds:new Date(2027,10,29), de:new Date(2027,11,5), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:85, ds:new Date(2027,11,6), de:new Date(2027,11,12), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:86, ds:new Date(2027,11,13), de:new Date(2027,11,19), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:87, ds:new Date(2027,11,20), de:new Date(2027,11,26), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" }
+];
+
+const BOOKS = [
+  ["Gênesis",50,"AT",1,"No princípio, criou Deus os céus e a terra.","Gênesis 1:1"],
+  ["Êxodo",40,"AT",51,"Eu sou o que sou.","Êxodo 3:14"],
+  ["Levítico",27,"AT",91,"Sede santos, porque eu, o Senhor vosso Deus, sou santo.","Levítico 19:2"],
+  ["Números",36,"AT",118,"O Senhor te abençoe e te guarde.","Números 6:24"],
+  ["Deuteronômio",34,"AT",154,"Amarás o Senhor teu Deus de todo o teu coração.","Deuteronômio 6:5"],
+  ["Josué",24,"AT",188,"Escolhei hoje a quem sirveis.","Josué 24:15"],
+  ["Juízes",21,"AT",212,"Naqueles dias não havia rei em Israel; cada um fazia o que parecia reto aos seus olhos.","Juízes 21:25"],
+  ["Rute",4,"AT",233,"Onde tu morreres, morrerei eu.","Rute 1:17"],
+  ["1 Samuel",31,"AT",237,"O homem olha para a aparência exterior, mas o Senhor olha para o coração.","1 Samuel 16:7"],
+  ["2 Samuel",24,"AT",268,"Teu amor por mim era maravilhoso, superior ao amor das mulheres.","2 Samuel 1:26"],
+  ["1 Reis",22,"AT",292,"O Senhor é Deus; o Senhor é Deus!","1 Reis 18:39"],
+  ["2 Reis",25,"AT",314,"Não vos faltou coisa alguma de tudo o que disse.","2 Reis 10:10"],
+  ["1 Crônicas",29,"AT",339,"Vosso é, Senhor, a grandeza, o poder, a glória, a vitória e a majestade.","1 Crônicas 29:11"],
+  ["2 Crônicas",36,"AT",368,"Se o meu povo, que se chama pelo meu nome, se humilhar e orar...","2 Crônicas 7:14"],
+  ["Esdras",10,"AT",404,"A mão bondosa do seu Deus estava sobre ele.","Esdras 7:9"],
+  ["Neemias",13,"AT",414,"A alegria do Senhor é a nossa força.","Neemias 8:10"],
+  ["Ester",10,"AT",427,"Quem sabe se não foi para um momento como este que chegaste ao reino?","Ester 4:14"],
+  ["Jó",42,"AT",437,"O Senhor o deu, o Senhor o tomou; bendito seja o nome do Senhor.","Jó 1:21"],
+  ["Salmos",150,"AT",479,"O Senhor é o meu pastor; nada me faltará.","Salmos 23:1"],
+  ["Provérbios",31,"AT",629,"Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento.","Provérbios 3:5"],
+  ["Eclesiastes",12,"AT",660,"O fim de tudo o que se ouviu é este: teme a Deus e guarda os seus mandamentos.","Eclesiastes 12:13"],
+  ["Cantares",8,"AT",672,"Forte como a morte é o amor.","Cantares 8:6"],
+  ["Isaías",66,"AT",680,"Mas os que esperam no Senhor renovarão as suas forças.","Isaías 40:31"],
+  ["Jeremias",52,"AT",746,"Porque eu bem sei os planos que tenho para vós, diz o Senhor.","Jeremias 29:11"],
+  ["Lamentações",5,"AT",798,"As misericórdias do Senhor não têm fim; as suas compaixões não se esgotam.","Lamentações 3:22"],
+  ["Ezequiel",48,"AT",803,"Eu vos darei um coração novo e porei dentro de vós um espírito novo.","Ezequiel 36:26"],
+  ["Daniel",12,"AT",851,"Os entendidos resplandecerão como o fulgor do firmamento.","Daniel 12:3"],
+  ["Oséias",14,"AT",863,"Meu povo perece por falta de conhecimento.","Oséias 4:6"],
+  ["Joel",3,"AT",877,"Derramarei o meu Espírito sobre toda a carne.","Joel 2:28"],
+  ["Amós",9,"AT",880,"Corra o direito como as águas, e a justiça como ribeiro perene.","Amós 5:24"],
+  ["Obadias",1,"AT",889,"Como procedeste, assim se fará contigo.","Obadias 1:15"],
+  ["Jonas",4,"AT",890,"A salvação pertence ao Senhor.","Jonas 2:9"],
+  ["Miquéias",7,"AT",894,"Fazer justiça, amar a misericórdia e andar humildemente com o teu Deus.","Miquéias 6:8"],
+  ["Naum",3,"AT",901,"O Senhor é bom, uma fortaleza no dia da angústia.","Naum 1:7"],
+  ["Habacuque",3,"AT",904,"O justo viverá pela sua fé.","Habacuque 2:4"],
+  ["Sofonias",3,"AT",907,"O Senhor teu Deus está no meio de ti como herói que salva.","Sofonias 3:17"],
+  ["Ageu",2,"AT",910,"A glória futura desta casa será maior do que a da anterior.","Ageu 2:9"],
+  ["Zacarias",14,"AT",912,"Não por força nem por poder, mas pelo meu Espírito, diz o Senhor.","Zacarias 4:6"],
+  ["Malaquias",4,"AT",926,"Para vós outros que temeis o meu nome, nascerá o sol da justiça.","Malaquias 4:2"],
+  ["Mateus",28,"NT",930,"Ide, portanto, e fazei discípulos de todas as nações.","Mateus 28:19"],
+  ["Marcos",16,"NT",958,"O Filho do homem não veio para ser servido, mas para servir.","Marcos 10:45"],
+  ["Lucas",24,"NT",974,"O Filho do homem veio buscar e salvar o perdido.","Lucas 19:10"],
+  ["João",21,"NT",998,"Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito.","João 3:16"],
+  ["Atos",28,"NT",1019,"Recebereis poder, ao descer sobre vós o Espírito Santo.","Atos 1:8"],
+  ["Romanos",16,"NT",1047,"Tudo concorre para o bem daqueles que amam a Deus.","Romanos 8:28"],
+  ["1 Coríntios",16,"NT",1063,"O amor nunca falha.","1 Coríntios 13:8"],
+  ["2 Coríntios",13,"NT",1079,"A minha graça te basta, porque o poder se aperfeiçoa na fraqueza.","2 Coríntios 12:9"],
+  ["Gálatas",6,"NT",1092,"Já não sou eu quem vive, mas Cristo vive em mim.","Gálatas 2:20"],
+  ["Efésios",6,"NT",1098,"Sede fortes no Senhor e na força do seu poder.","Efésios 6:10"],
+  ["Filipenses",4,"NT",1104,"Tudo posso naquele que me fortalece.","Filipenses 4:13"],
+  ["Colossenses",4,"NT",1108,"Cristo em vós, a esperança da glória.","Colossenses 1:27"],
+  ["1 Tessalonicenses",5,"NT",1112,"Regozijai-vos sempre. Orai sem cessar. Em tudo dai graças.","1 Tessalonicenses 5:16-18"],
+  ["2 Tessalonicenses",3,"NT",1117,"O próprio Senhor da paz vos dê paz em toda a circunstância.","2 Tessalonicenses 3:16"],
+  ["1 Timóteo",6,"NT",1120,"Não te envergonhes do testemunho do nosso Senhor.","2 Timóteo 1:8"],
+  ["2 Timóteo",4,"NT",1126,"Combati o bom combate, terminei a corrida, guardei a fé.","2 Timóteo 4:7"],
+  ["Tito",3,"NT",1130,"A graça de Deus se manifestou para a salvação de todos os homens.","Tito 2:11"],
+  ["Filemom",1,"NT",1133,"Talvez ele se tenha apartado por um momento para que o recebesses para sempre.","Filemom 1:15"],
+  ["Hebreus",13,"NT",1134,"A fé é a certeza daquilo que esperamos e a prova das coisas que não vemos.","Hebreus 11:1"],
+  ["Tiago",5,"NT",1147,"A fé sem obras é morta.","Tiago 2:26"],
+  ["1 Pedro",5,"NT",1152,"Lançai sobre ele toda a vossa ansiedade, porque ele tem cuidado de vós.","1 Pedro 5:7"],
+  ["2 Pedro",3,"NT",1157,"O Senhor não retarda a sua promessa, como alguns a julgam demorada.","2 Pedro 3:9"],
+  ["1 João",5,"NT",1160,"Deus é amor.","1 João 4:8"],
+  ["2 João",1,"NT",1165,"Quem persevera na doutrina de Cristo, esse tem o Pai e o Filho.","2 João 1:9"],
+  ["3 João",1,"NT",1166,"Amado, ora eu desejo que te vá bem em tudo.","3 João 1:2"],
+  ["Judas",1,"NT",1167,"Àquele que é poderoso para vos guardar de tropeçar...","Judas 1:24"],
+  ["Apocalipse",22,"NT",1168,"Eis que venho sem demora, e comigo está o meu galardão.","Apocalipse 22:12"]
+];
+
+function getBookAtChapter(n) {
+  for (let i = BOOKS.length-1; i>=0; i--) if (n >= BOOKS[i][3]) return BOOKS[i];
+  return BOOKS[0];
+}
+function getATProgress(n) { return Math.min(100, Math.round(Math.max(0,n-1)/AT_CHAPTERS*100)); }
+function getNTProgress(n) { if(n<930) return 0; return Math.min(100,Math.round((n-930)/NT_CHAPTERS*100)); }
+
+function generateDanielTimeline() {
+return `
+  <svg viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#1a1208"/>
+        <stop offset="50%" stop-color="#2c1f0e"/>
+        <stop offset="100%" stop-color="#1a1208"/>
+      </linearGradient>
+      <linearGradient id="line-grad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#3d2b14"/>
+        <stop offset="20%" stop-color="#c9a84c"/>
+        <stop offset="80%" stop-color="#c9a84c"/>
+        <stop offset="100%" stop-color="#3d2b14"/>
+      </linearGradient>
+    </defs>
+    <rect width="800" height="280" fill="url(#bg)"/>
+
+    <!-- Title -->
+    <text x="400" y="28" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="11" fill="#7a6030" letter-spacing="3">AS QUATRO BESTAS · DANIEL 7 · OS QUATRO IMPÉRIOS</text>
+
+    <!-- Timeline line -->
+    <line x1="60" y1="130" x2="740" y2="130" stroke="url(#line-grad)" stroke-width="1.5"/>
+
+    <!-- Kingdom 1: Babylon -->
+    <circle cx="130" cy="130" r="8" fill="#c9a84c" opacity="0.9"/>
+    <line x1="130" y1="122" x2="130" y2="75" stroke="#c9a84c" stroke-width="1" opacity="0.6"/>
+    <text x="130" y="68" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="9.5" fill="#c9a84c" letter-spacing="1">BABILÔNIA</text>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#7a6e5a">Leão com asas</text>
+    <text x="130" y="95" text-anchor="middle" font-size="9" fill="#7a6e5a">Daniel 7:4</text>
+    <text x="130" y="155" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="8" fill="#5a4020" letter-spacing="1">605–539 a.C.</text>
+    <text x="130" y="168" text-anchor="middle" font-size="8.5" fill="#5a5040" font-style="italic">Nabucodonosor</text>
+
+    <!-- Kingdom 2: Persia -->
+    <circle cx="290" cy="130" r="8" fill="#8a9a7a" opacity="0.9"/>
+    <line x1="290" y1="138" x2="290" y2="185" stroke="#8a9a7a" stroke-width="1" opacity="0.6"/>
+    <text x="290" y="200" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="9.5" fill="#8a9a7a" letter-spacing="1">MEDO-PÉRSIA</text>
+    <text x="290" y="214" text-anchor="middle" font-size="9" fill="#7a6e5a">Urso com costelas</text>
+    <text x="290" y="227" text-anchor="middle" font-size="9" fill="#7a6e5a">Daniel 7:5 / 8:20</text>
+    <text x="290" y="110" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="8" fill="#5a4020" letter-spacing="1">539–331 a.C.</text>
+    <text x="290" y="98" text-anchor="middle" font-size="8.5" fill="#5a5040" font-style="italic">Ciro / Dario</text>
+
+    <!-- Kingdom 3: Greece -->
+    <circle cx="470" cy="130" r="8" fill="#7a9aaf" opacity="0.9"/>
+    <line x1="470" y1="122" x2="470" y2="75" stroke="#7a9aaf" stroke-width="1" opacity="0.6"/>
+    <text x="470" y="68" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="9.5" fill="#7a9aaf" letter-spacing="1">GRÉCIA</text>
+    <text x="470" y="82" text-anchor="middle" font-size="9" fill="#7a6e5a">Leopardo com asas</text>
+    <text x="470" y="95" text-anchor="middle" font-size="9" fill="#7a6e5a">Daniel 7:6 / 8:21</text>
+    <text x="470" y="155" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="8" fill="#5a4020" letter-spacing="1">331–146 a.C.</text>
+    <text x="470" y="168" text-anchor="middle" font-size="8.5" fill="#5a5040" font-style="italic">Alexandre</text>
+
+    <!-- Kingdom 4: Rome -->
+    <circle cx="640" cy="130" r="8" fill="#8b3020" opacity="0.9"/>
+    <line x1="640" y1="138" x2="640" y2="185" stroke="#8b3020" stroke-width="1" opacity="0.6"/>
+    <text x="640" y="200" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="9.5" fill="#c44040" letter-spacing="1">ROMA</text>
+    <text x="640" y="214" text-anchor="middle" font-size="9" fill="#7a6e5a">Besta terrível</text>
+    <text x="640" y="227" text-anchor="middle" font-size="9" fill="#7a6e5a">Daniel 7:7</text>
+    <text x="640" y="110" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="8" fill="#5a4020" letter-spacing="1">146 a.C.→ futuro</text>
+    <text x="640" y="98" text-anchor="middle" font-size="8.5" fill="#5a5040" font-style="italic">10 chifres / Anticristo</text>
+
+    <!-- Special marker: Son of Man -->
+    <line x1="740" y1="130" x2="780" y2="130" stroke="#c9a84c" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+    <text x="790" y="127" font-size="9" fill="#c9a84c" font-style="italic">Filho do</text>
+    <text x="790" y="138" font-size="9" fill="#c9a84c" font-style="italic">Homem</text>
+    <text x="790" y="149" font-size="7.5" fill="#7a6030">Dan 7:13</text>
+
+    <!-- Arrows between kingdoms -->
+    <path d="M 146 130 L 274 130" stroke="#3d2b14" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M 306 130 L 454 130" stroke="#3d2b14" stroke-width="1"/>
+    <path d="M 486 130 L 624 130" stroke="#3d2b14" stroke-width="1"/>
+
+    <!-- Bottom note -->
+    <text x="400" y="262" text-anchor="middle" font-size="8.5" fill="#5a4020" font-style="italic">As mesmas quatro potências aparecem em Daniel 2 como partes de uma estátua (ouro, prata, bronze, ferro)</text>
+  </svg>`;
+}
+
+const WEEKS_DATA = {
+  32: {
+    number: 32,
+    title: "As Visões Proféticas de Daniel",
+    dateStart: new Date(2026, 9, 25), // Oct 25 (Sun)
+    dateEnd: new Date(2026, 9, 31),   // Oct 31 (Sat)
+    range: "Daniel 7 – Daniel 12",
+    complementDay: new Date(2026, 9, 31), // Sábado Nov 2
+    chaptersStart: 857,
+    chaptersEnd: 862,
+    days: [
+      {
+        dayOfWeek: "Domingo",
+        date: new Date(2026, 9, 25),
+        reading: "Daniel 7",
+        verses: null,
+        context: "A visão das quatro bestas e o Ancião de Dias — um dos textos proféticos mais densos de todo o AT.",
+        isToday: false
+      },
+      {
+        dayOfWeek: "Segunda-feira",
+        date: new Date(2026, 9, 26),
+        reading: "Daniel 8",
+        verses: null,
+        context: "O carneiro e o bode — Pérsia e Grécia prefigurados. Gabriel explica a visão a Daniel.",
+        isToday: false
+      },
+      {
+        dayOfWeek: "Terça-feira",
+        date: new Date(2026, 9, 27),
+        reading: "Daniel 9:1–19",
+        verses: "v.1–19",
+        context: "A oração de confissão de Daniel — um dos momentos de intercessão mais profundos da Bíblia.",
+        isToday: false
+      },
+      {
+        dayOfWeek: "Quarta-feira",
+        date: new Date(2026, 9, 28),
+        reading: "Daniel 9:20–27",
+        verses: "v.20–27",
+        context: "As Setenta Semanas — profecia central da escatologia bíblica. Leitura lenta e cuidadosa.",
+        isToday: false
+      },
+      {
+        dayOfWeek: "Quinta-feira",
+        date: new Date(2026, 9, 29),
+        reading: "Daniel 10 – 11",
+        verses: null,
+        context: "O anjo mensageiro e a guerra espiritual. Daniel 11 traça o curso de impérios com precisão histórica notável.",
+        isToday: false
+      },
+      {
+        dayOfWeek: "Sexta-feira",
+        date: new Date(2026, 9, 30),
+        reading: "Daniel 12",
+        verses: null,
+        context: "O fim dos tempos, a ressurreição e a instrução final a Daniel. Encerramento majestoso do livro.",
+        isToday: false
+      }
+    ],
+    complement: {
+      date: new Date(2026, 9, 31),
+      intro: "Esta semana mergulhamos no coração profético do Antigo Testamento. Daniel 7–12 é a fundação sobre a qual toda a escatologia bíblica é construída — Jesus cita Daniel diretamente no Sermão do Oliveiras, e o Apocalipse ecoa suas imagens em dezenas de passagens. Reserve a hora completa: o material desta semana é excepcionalmente rico.",
+      resources: [
+        {
+          type: "thompson",
+          title: "Bíblia Thompson",
+          items: [
+            "Cadeia temática nº 3562 — 'Filho do Homem': rastreie todas as ocorrências desde Daniel 7 até os Evangelhos e Apocalipse",
+            "Cadeia temática nº 3940 — 'Ressurreição dos mortos': Daniel 12:2 é o marco do AT; compare com 1Ts 4 e Ap 20",
+            "Nota de estudo em Daniel 9:24–27: as Setenta Semanas — Thompson traz cronologia detalhada",
+            "Índice de Tópicos: 'Profecia messiânica' — veja como Daniel é listado como cumprimento"
+          ]
+        },
+        {
+          type: "scofield",
+          title: "Bíblia Scofield",
+          items: [
+            "Notas extensas em Daniel 7:13 sobre 'Filho do Homem' e sua conexão com Mt 26:64",
+            "Nota dispensacionalista em Daniel 9:24 — Scofield é referência clássica para a interpretação das 70 semanas",
+            "Nota em Daniel 11:36 — 'o rei que faz sua vontade' e a figura do Anticristo",
+            "Apêndice 'Cronologia Profética' no final da Scofield — consultar a linha de Daniel"
+          ]
+        },
+        {
+          type: "atlas",
+          title: "Atlas Reinke + Zondervan",
+          items: [
+            "Reinke — Mapa do Império Babilônico e Persa (caps. relevantes para Daniel 7–8)",
+            "Reinke — Rota do exílio: Jerusalém → Babilônia; localize Susa (Daniel 8:2)",
+            "Zondervan p.182–190 — 'The World of Daniel': excelente reconstrução geográfica dos quatro impérios",
+            "Zondervan — Mapa da campanha de Alexandre (Daniel 8: o bode dos gregos)"
+          ]
+        },
+        {
+          type: "escatologia",
+          title: "Escatologia",
+          items: [
+            "LaHaye (Enciclopédia Popular) — verbetes: 'Setenta Semanas', 'Anticristo', 'Tribulação', 'Filho do Homem'",
+            "Charting the End Times — Diagrama das 70 Semanas de Daniel (p.30–35): use com a família, é visual",
+            "Charting — Gráfico 'Four Kingdoms of Daniel' (p.28): mostre para a filha como os reinos se encaixam",
+            "Pentecost (Manual de Escatologia) — Cap. sobre Daniel 9: leitura sua pessoal, não para discussão em família"
+          ]
+        },
+        {
+          type: "personagens",
+          title: "Enciclopédia de Personagens · Matheus Soares",
+          items: [
+            "Daniel — perfil completo; destaque o desenvolvimento do cap.1 ao cap.12",
+            "Gabriel — aparece em Daniel 8:16 e 9:21; mesmo anjo de Lucas 1",
+            "Nabucodonosor — já estudado em semanas anteriores; revisar conexão com Daniel 7",
+            "Miguel — príncipe angelical em Daniel 10:13,21 e 12:1; conectar com Jd 9 e Ap 12:7"
+          ]
+        },
+        {
+          type: "dicionario",
+          title: "Dicionário Bíblico Crescer",
+          items: [
+            "Querubim / Serafim — contexto da visão do cap.10",
+            "Babilônia — resumo histórico e simbólico",
+            "Abominação da desolação — Daniel 9:27; 11:31; 12:11 — termo que Jesus retoma em Mt 24:15",
+            "Susa — cidade persa; local da visão do capítulo 8"
+          ]
+        },
+        {
+          type: "judaica",
+          title: "Bíblia Judaica Completa",
+          items: [
+            "Daniel 7:13 — compare 'bar enash' (filho do homem em aramaico) na tradução de Stern com a LXX",
+            "Daniel 9:24 — 'shavuim shivim' (setenta semanas/heptadas): Stern traz nota sobre a contagem judaica",
+            "Verifique o nome hebraico/aramaico dos personagens: Daniel = Dan'iel, Miguel = Mikha'el, Gabriel = Gavri'el"
+          ]
+        },
+        {
+          type: "extra",
+          title: "Sugestão Adicional",
+          items: [
+            "Para a filha (9 anos): após o estudo, peça que ela desenhe uma das bestas de Daniel 7 como ela imaginou. Crie uma tradição de 'ilustração da semana' nas semanas com visões proféticas",
+            "Conexão NT para mencionar em família: leia Mateus 24:15–22 logo após Daniel 9:27 — Jesus está citando exatamente o que vocês acabaram de ler",
+            "Versículo para memorizar juntos: Daniel 12:3 — 'Os entendidos resplandecerão como o fulgor do firmamento'"
+          ]
+        }
+      ]
+    },
+    reflection: {
+      verse: "\"Os que têm entendimento resplandecerão como o fulgor do firmamento, e os que a muitos ensinam a justiça, como as estrelas, para sempre e eternamente.\"",
+      reference: "Daniel 12:3",
+      question: "Pergunta para discussão em família: Gabriel veio especialmente a Daniel quando ele ainda estava orando (Daniel 9:20–21). O que isso nos diz sobre a oração como ponto de partida para entender os planos de Deus?"
+    },
+    visual: generateDanielTimeline()
+  }
+};
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let state = {
+  currentWeek: 32,
+  completedDays: {},
+  completedComplements: {},
+  notes: {},
+  streak: 0
+};
+
+function loadState() {
+  try { const s = localStorage.getItem('plano_biblia_v2'); if(s) state = {...state,...JSON.parse(s)}; } catch(e){}
+}
+function saveState() {
+  try { localStorage.setItem('plano_biblia_v2', JSON.stringify(state)); } catch(e){}
+}
+
+// ══════════════════════════════════════════════
+// VIEW SWITCHING
+// ══════════════════════════════════════════════
+function showIndex() {
+  document.body.setAttribute('data-view','index');
+  document.getElementById('view-notes').classList.remove('active');
+  document.getElementById('view-index').classList.add('active');
+  document.getElementById('view-week').classList.remove('active');
+  renderIndex();
+  updateStatsGlobal();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showWeek(weekNum) {
+  document.body.setAttribute('data-view','week');
+  document.getElementById('view-notes').classList.remove('active');
+  state.currentWeek = weekNum;
+  saveState();
+  document.getElementById('view-week').classList.add('active');
+  document.getElementById('view-index').classList.remove('active');
+  renderWeek(weekNum);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ══════════════════════════════════════════════
+// INDEX RENDER
+// ══════════════════════════════════════════════
+const BLOCK_ORDER = [
+  "Pentateuco","Históricos AT","Poéticos","Proféticos AT","Evangelhos + Atos","Epístolas + Ap"
+];
+
+function getWeekStatus(weekNum) {
+  const week = WEEKS_DATA[weekNum];
+  if (!week) return 'none';
+  const totalDays = week.days.length;
+  const doneDays = week.days.filter((_,i) => state.completedDays[`${weekNum}-${i}`]).length;
+  const doneComp = !!state.completedComplements[weekNum];
+  if (doneDays === totalDays && doneComp) return 'done';
+  if (doneDays > 0 || doneComp) return 'progress';
+  return 'none';
+}
+
+function renderIndex() {
+  const container = document.getElementById('index-grid-container');
+  let html = '';
+  let currentBlock = '';
+
+  WEEKS_INDEX.forEach(w => {
+    if (w.block !== currentBlock) {
+      currentBlock = w.block;
+      if (html) html += '</div>'; // close previous grid
+      html += `<div class="index-block-label">${w.block}</div>`;
+      html += `<div class="index-grid">`;
+    }
+
+    const status = getWeekStatus(w.num);
+    const statusLabels = {none:'Não iniciado', progress:'Em andamento', done:'Concluído'};
+    const hasContent = w.hasContent;
+
+    html += `<div class="week-card ${hasContent?'has-content':''} status-${status}" onclick="showWeek(${w.num})">
+      <div class="wc-header">
+        <div class="wc-num">Semana ${w.num}</div>
+        <div class="wc-status">
+          <div class="status-dot ${status}"></div>
+          <span class="status-label">${statusLabels[status]}</span>
+        </div>
+      </div>
+      <div class="wc-dates">${formatDate(w.ds)} – ${formatDate(w.de)}</div>
+      <div class="wc-range">${w.range}</div>
+      <div class="wc-block">${w.block}${hasContent?' · Conteúdo disponível':''}</div>
+      <div class="wc-arrow">→</div>
+    </div>`;
+  });
+
+  if (html) html += '</div>'; // close last grid
+  container.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// WEEK RENDER
+// ══════════════════════════════════════════════
+function formatDate(d) {
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+}
+function formatDateFull(d) {
+  return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+}
+function isToday(date) {
+  const t = new Date();
+  return date.toDateString() === t.toDateString();
+}
+
+function renderWeek(weekNum) {
+  const wi = WEEKS_INDEX[weekNum-1];
+  document.getElementById('btn-prev').disabled = weekNum <= 1;
+  document.getElementById('btn-next').disabled = weekNum >= TOTAL_WEEKS;
+  document.getElementById('week-title-main').textContent = WEEKS_DATA[weekNum]?.title || `Semana ${weekNum}`;
+  document.getElementById('week-title-sub').textContent =
+    `Semana ${weekNum} · ${formatDate(wi.ds)} – ${formatDate(wi.de)} · ${wi.range}`;
+
+  // Update book stats based on this week
+  updateStatsForWeek(weekNum);
+
+  const week = WEEKS_DATA[weekNum];
+  if (!week) { renderPlaceholder(weekNum); return; }
+
+  const content = document.getElementById('main-content');
+  let html = '';
+
+  // Daily sessions
+  html += `<div class="section-heading fade-in">Leitura Diária · 15 minutos por dia</div>`;
+  html += `<div class="days-grid fade-in">`;
+  week.days.forEach((day, idx) => {
+    const key = `${weekNum}-${idx}`;
+    const done = !!state.completedDays[key];
+    const today = isToday(day.date);
+    html += `<div class="day-card ${done?'completed':''} ${today?'today':''}" onclick="toggleDay('${key}',event)">
+      <div class="day-header">
+        <div><div class="day-label">${day.dayOfWeek}</div><div class="day-date">${formatDate(day.date)}</div></div>
+        <div class="day-check ${done?'checked':''}" onclick="toggleDay('${key}',event)"></div>
+      </div>
+      <div class="day-reading">${day.reading}${day.verses?` <span style="color:var(--text-dim);font-size:.83em">${day.verses}</span>`:''}</div>
+      <div class="day-context">${day.context}</div>
+      ${today?`<div class="day-badge today-badge">Hoje</div>`:done?`<div class="day-badge">Lido ✓</div>`:''}
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Visual
+  html += `<div class="section-heading fade-in">Visual da Semana</div>`;
+  html += `<div class="visual-container fade-in"><div class="visual-title">Os Quatro Impérios de Daniel · Mapa Temporal</div>${week.visual}</div>`;
+
+  // Complement
+  const compDone = !!state.completedComplements[weekNum];
+  html += `<div class="section-heading fade-in">Complementação Semanal · ~1 hora · ${formatDate(week.complement.date)}</div>`;
+  html += `<div class="complement-card fade-in">
+    <div class="complement-header">
+      <div class="complement-title">Estudo Complementar — ${week.title}</div>
+      <div style="display:flex;align-items:center;gap:.8rem">
+        <div class="complement-date">${formatDateFull(week.complement.date)}</div>
+        <div class="day-check ${compDone?'checked':''}" onclick="toggleComplement(${weekNum})" title="Marcar como concluída"></div>
+      </div>
+    </div>
+    <p class="complement-intro">${week.complement.intro}</p>
+    <div class="resources-grid">`;
+  week.complement.resources.forEach(r => {
+    html += `<div class="resource-block ${r.type}">
+      <div class="resource-source">${r.title}</div>
+      <div class="resource-content"><ul>${r.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  // Reflection
+  html += `<div class="section-heading fade-in">Reflexão da Semana</div>
+  <div class="reflection-card fade-in">
+    <div class="reflection-ornament">"</div>
+    <div class="reflection-quote">${week.reflection.verse}</div>
+    <div class="reflection-ref">${week.reflection.reference}</div>
+    <div class="reflection-question">✦ ${week.reflection.question}</div>
+  </div>`;
+
+  // Notes
+  html += `<div class="section-heading fade-in">Anotações da Semana</div>
+  <textarea class="notes-textarea fade-in" placeholder="Insights, perguntas da leitura, versículos marcantes, observações da família..."
+    oninput="saveNote(${weekNum},this.value)">${state.notes[weekNum]||''}</textarea>`;
+
+  // Actions
+  html += `<div class="actions-bar fade-in">
+    <button class="action-btn" onclick="exportProgress()">↓ Exportar Progresso</button>
+    <button class="action-btn" onclick="document.getElementById('import-input').click()">↑ Importar Progresso</button>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importProgress(event)">
+    <button class="action-btn danger" onclick="confirmReset()">Reiniciar Semana</button>
+  </div>`;
+
+  content.innerHTML = html;
+}
+
+function renderPlaceholder(weekNum) {
+  const wi = WEEKS_INDEX[weekNum-1];
+  document.getElementById('main-content').innerHTML = `
+    <div class="placeholder-box fade-in">
+      <div style="font-size:1.4rem;color:var(--ink-gold-dim);margin-bottom:0.8rem">✦</div>
+      <div style="font-size:0.85rem;letter-spacing:.15em;color:var(--text-dim)">SEMANA ${weekNum} · ${wi.block}</div>
+      <div style="margin-top:.8rem;font-size:.87rem;color:var(--text-dim);font-style:italic">
+        ${wi.range}<br><br>Este conteúdo será gerado progressivamente.
+      </div>
+      <button class="action-btn" style="margin-top:1.5rem" onclick="showIndex()">← Voltar ao Índice</button>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════
+function updateStatsGlobal() {
+  const totalDone = Object.values(state.completedDays).filter(Boolean).length;
+  const weeksCompleted = Object.keys(state.completedComplements).filter(k=>state.completedComplements[k]).length;
+  const chapters = Math.min(totalDone, TOTAL_CHAPTERS);
+  const pct = Math.round(chapters/TOTAL_CHAPTERS*100);
+
+  document.getElementById('progress-pct').textContent = pct+'%';
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('stat-weeks').textContent = `${weeksCompleted} / ${TOTAL_WEEKS}`;
+  document.getElementById('stat-chapters').textContent = `${chapters} / ${TOTAL_CHAPTERS}`;
+  document.getElementById('stat-streak').textContent = totalDone;
+
+  // Book/AT/NT based on global chapter progress
+  const book = getBookAtChapter(chapters+1);
+  const bookPct = Math.min(100,Math.round(Math.max(0,chapters+1-book[3])/book[1]*100));
+  document.getElementById('bar-book').style.width = bookPct+'%';
+  document.getElementById('pct-book').textContent = bookPct+'%';
+  document.getElementById('label-book').textContent = book[0];
+  document.getElementById('bar-at').style.width = getATProgress(chapters)+'%';
+  document.getElementById('pct-at').textContent = getATProgress(chapters)+'%';
+  document.getElementById('bar-nt').style.width = getNTProgress(chapters)+'%';
+  document.getElementById('pct-nt').textContent = getNTProgress(chapters)+'%';
+  document.getElementById('book-badge').textContent = book[0].toUpperCase();
+  document.getElementById('book-verse-text').textContent = book[4] ? `"${book[4]}"` : '';
+  document.getElementById('book-verse-ref').textContent = book[5]||'';
+}
+
+function updateStatsForWeek(weekNum) {
+  // Row 1: global (unchanged by week navigation)
+  updateStatsGlobal();
+
+  // Row 2: override book/verse to reflect the DISPLAYED week
+  const wi = WEEKS_INDEX[weekNum-1];
+  if (!wi) return;
+  const week = WEEKS_DATA[weekNum];
+  if (!week) return;
+
+  // Determine book from week's chaptersStart
+  const book = getBookAtChapter(week.chaptersStart);
+  const doneDays = week.days.filter((_,i)=>state.completedDays[`${weekNum}-${i}`]).length;
+  const bookPct = Math.min(100,Math.round(doneDays/week.days.length*100));
+
+  // Count done days in AT vs NT for THIS week
+  const atDone = week.days.filter((_,i)=>state.completedDays[`${weekNum}-${i}`] && week.chaptersStart < 930).length;
+  const ntDone = week.days.filter((_,i)=>state.completedDays[`${weekNum}-${i}`] && week.chaptersStart >= 930).length;
+
+  document.getElementById('bar-book').style.width = bookPct+'%';
+  document.getElementById('pct-book').textContent = bookPct+'%';
+  document.getElementById('label-book').textContent = book[0];
+  document.getElementById('book-badge').textContent = book[0].toUpperCase();
+  document.getElementById('book-verse-text').textContent = book[4] ? `"${book[4]}"` : '';
+  document.getElementById('book-verse-ref').textContent = book[5]||'';
+}
+
+// ══════════════════════════════════════════════
+// INTERACTIONS
+// ══════════════════════════════════════════════
+function toggleDay(key, event) {
+  if (event) event.stopPropagation();
+  state.completedDays[key] = !state.completedDays[key];
+  saveState();
+  renderWeek(state.currentWeek);
+  showToast(state.completedDays[key]?'Leitura marcada ✓':'Marcação removida');
+}
+
+function toggleComplement(weekNum) {
+  state.completedComplements[weekNum] = !state.completedComplements[weekNum];
+  saveState();
+  renderWeek(weekNum);
+  showToast(state.completedComplements[weekNum]?'Complementação concluída ✓':'Marcação removida');
+}
+
+function saveNote(weekNum, value) {
+  state.notes[weekNum] = value;
+  saveState();
+}
+
+function navWeek(delta) {
+  const next = state.currentWeek + delta;
+  if (next < 1 || next > TOTAL_WEEKS) return;
+  showWeek(next);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function exportProgress() {
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `plano_biblia_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Progresso exportado!');
+}
+
+function importProgress(event) {
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      state = {...state,...JSON.parse(e.target.result)};
+      saveState(); showIndex();
+      showToast('Progresso importado ✓');
+    } catch { showToast('Erro ao importar'); }
+  };
+  reader.readAsText(file);
+}
+
+function confirmReset() {
+  if (confirm('Reiniciar marcações desta semana? As anotações serão mantidas.')) {
+    const w = state.currentWeek;
+    WEEKS_DATA[w]?.days.forEach((_,i) => delete state.completedDays[`${w}-${i}`]);
+    delete state.completedComplements[w];
+    saveState(); renderWeek(w);
+    showToast('Semana reiniciada');
+  }
+}
+
+// ══════════════════════════════════════════════
+// NOTES VIEW
+// ══════════════════════════════════════════════
+function showNotes() {
+  document.body.setAttribute('data-view','notes');
+  document.getElementById('view-notes').classList.add('active');
+  document.getElementById('view-index').classList.remove('active');
+  document.getElementById('view-week').classList.remove('active');
+  renderNotes();
+  updateStatsGlobal();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderNotes() {
+  const container = document.getElementById('notes-list-content');
+
+  // Collect weeks with notes, sorted by week number
+  const notedWeeks = Object.keys(state.notes)
+    .map(k => parseInt(k))
+    .filter(n => state.notes[n] && state.notes[n].trim().length > 0)
+    .sort((a,b) => a - b);
+
+  if (notedWeeks.length === 0) {
+    container.innerHTML = `<div class="notes-empty">
+      Nenhuma anotação registrada ainda.<br>
+      As anotações feitas nas páginas das semanas aparecerão aqui.
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  notedWeeks.forEach(weekNum => {
+    const wi = WEEKS_INDEX[weekNum-1];
+    if (!wi) return;
+    const note = state.notes[weekNum];
+    html += `<div class="note-entry fade-in">
+      <div class="note-entry-header" onclick="showWeek(${weekNum})">
+        <div class="note-entry-meta">
+          <div class="note-entry-week">Semana ${weekNum} · ${wi.block}</div>
+          <div class="note-entry-range">${wi.range}</div>
+          <div class="note-entry-dates">${formatDate(wi.ds)} – ${formatDate(wi.de)}</div>
+        </div>
+        <button class="note-entry-link" onclick="event.stopPropagation();showWeek(${weekNum})">
+          Ir à semana →
+        </button>
+      </div>
+      <div class="note-entry-body">${escapeHtml(note)}</div>
+    </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+loadState();
+showIndex();
+</script>
+</body>
+</html>
