@@ -305,6 +305,7 @@ function renderPH(wk){
   }
 }
 
+function goWeek(n){location.href="semanas.html?week="+n;}
 function renderNotes(){
   const c=document.getElementById('nl');
   const wks=Object.keys(NT_NOTES).map(k=>parseInt(k)).filter(n=>NT_NOTES[n]&&NT_NOTES[n].trim()).sort((a,b)=>a-b);
@@ -313,9 +314,9 @@ function renderNotes(){
   wks.forEach(wn=>{
     const wi=WEEKS_INDEX[wn-1];if(!wi)return;
     h+='<div class="ne fi">'
-      +'<div class="neh" onclick="location.href='semanas.html?week='+wn+''">'
+      +'<div class="neh" onclick="goWeek('+wn+')">'
       +'<div><div class="newk">Semana '+wn+' · '+wi.block+'</div><div class="ner">'+wi.range+'</div><div class="ned">'+fmtD(wi.ds)+' – '+fmtD(wi.de)+'</div></div>'
-      +'<button class="nel" onclick="event.stopPropagation();location.href='semanas.html?week='+wn+''">Ir à semana →</button>'
+      +'<button class="nel" onclick="event.stopPropagation();goWeek('+wn+')">Ir à semana →</button>'
       +'</div><div class="neb">'+esc(NT_NOTES[wn])+'</div></div>';
   });
   c.innerHTML=h;

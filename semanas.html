@@ -600,9 +600,9 @@ function renderWk(wn){
     const key=wn+'-'+i;
     const ck=!!ST.completedDays[key];
     const td=isToday(day.date);
-    h+='<div class="dc'+(ck?' ck':'')+(td?' td':'')+'" onclick="togDay(''+key+'',event)">'
+    h+='<div class="dc'+(ck?' ck':'')+(td?' td':'')+'" onclick="togDayK(\'+key+\')">'
       +'<div class="dch"><div><div class="dlbl">'+day.dayOfWeek+'</div><div class="ddt">'+fmtD(day.date)+'</div></div>'
-      +'<div class="dchk'+(ck?' ck':'')+'" onclick="togDay(''+key+'',event)"></div></div>'
+      +'<div class="dchk'+(ck?' ck':'')+'" onclick="togDayK(\'+key+\')"></div></div>'
       +'<div class="dr">'+day.reading+(day.verses?'<span style="color:var(--td);font-size:.82em"> '+day.verses+'</span>':'')+'</div>'
       +'<div class="dctx">'+day.context+'</div>'
       +(td?'<div class="dbdg td">Hoje</div>':ck?'<div class="dbdg">Lido ✓</div>':'')
@@ -646,6 +646,7 @@ function renderPH2(wn,wi){
 let _nt=null,_np=null;
 function onNote(wn,txt){_np={wn,txt};clearTimeout(_nt);_nt=setTimeout(async()=>{await dbSaveNote(wn,txt);_np=null;},1500);}
 
+function togDayK(key){togDay(key,null);}
 async function togDay(key,ev){
   if(ev)ev.stopPropagation();
   ST.completedDays[key]=!ST.completedDays[key];
