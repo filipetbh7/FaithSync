@@ -707,6 +707,8 @@ function doReset(){
 async function init(){
   const user=await getUser();
   if(!user){location.href='index.html';return;}
+  const {data:{session:sess}}=await sb().auth.getSession();
+  if(sess) await sb().auth.setSession({access_token:sess.access_token,refresh_token:sess.refresh_token});
   await dbLoad(user.id);
   const e=document.getElementById('uemail');if(e)e.textContent=user.email;
   renderWk(getWkFromURL());
