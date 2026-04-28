@@ -1,3 +1,4 @@
+/* FaithSync - Semanas Data - Generated content */
 /* FaithSync - Semanas Data - Generated content, do not edit manually */
 const WEEKS_DATA = {
   32: {
@@ -224,10 +225,3 @@ function generateDanielTimeline(){return `
     <!-- Bottom note -->
     <text x="400" y="262" text-anchor="middle" font-size="8.5" fill="#5a4020" font-style="italic">As mesmas quatro potências aparecem em Daniel 2 como partes de uma estátua (ouro, prata, bronze, ferro)</text>
   </svg>`;}
-
-let CW=32;
-
-function getWkFromURL(){
-  const p=new URLSearchParams(location.search);
-  return parseInt(p.get('week'))||ST.currentWeek||32;
-}
