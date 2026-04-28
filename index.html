@@ -661,6 +661,7 @@ function showToast(msg) {
 }
 
 // ── SUPABASE CLIENT ──
+
 let _supa = null;
 function supa() {
   if (!_supa) {
@@ -674,7 +675,7 @@ function supa() {
 async function getUser() {
   const { data: { session }, error } = await supa().auth.getSession();
   if (error) console.error('getSession error:', error.message);
-  console.log('index getUser:', session?.user?.email || 'none');
+  console.log('getUser:', session?.user?.email || 'not logged in');
   return session?.user || null;
 }
 
@@ -684,31 +685,35 @@ let _userId = null;
 
 async function loadFromSupabase(userId) {
   _userId = userId;
-  console.log('index loadFromSupabase for:', userId);
+  console.log('loadFromSupabase for:', userId);
   const { data: pd, error: pe } = await supa().from('progress').select('data').eq('user_id', userId).maybeSingle();
   if (pe) console.error('load progress error:', pe.message);
-  if (pd?.data) state = { ...state, ...pd.data };
+  if (pd?.data) { state = { ...state, ...pd.data }; console.log('progress loaded ok'); }
+  else console.log('no existing progress — will create on first save');
   const { data: nd, error: ne } = await supa().from('notes').select('week_number,content').eq('user_id', userId);
   if (ne) console.error('load notes error:', ne.message);
-  if (nd) nd.forEach(r => { notes[r.week_number] = r.content; });
+  if (nd) { nd.forEach(r => { notes[r.week_number] = r.content; }); console.log('notes loaded:', nd.length); }
 }
 
 async function saveProgress() {
-  if (!_userId) return;
+  if (!_userId) return false;
   const { error } = await supa().from('progress').upsert(
     { user_id: _userId, data: state, updated_at: new Date().toISOString() },
     { onConflict: 'user_id', ignoreDuplicates: false }
   );
-  if (error) console.error('saveProgress error:', error.message);
+  if (error) { console.error('saveProgress error:', error.code, error.message); return false; }
+  console.log('saveProgress ok');
+  return true;
 }
 
 async function saveNote(weekNum, content) {
   if (!_userId) return;
   notes[weekNum] = content;
-  await supa().from('notes').upsert(
+  const { error } = await supa().from('notes').upsert(
     { user_id: _userId, week_number: weekNum, content: content, updated_at: new Date().toISOString() },
-    { onConflict: 'user_id,week_number' }
+    { onConflict: 'user_id,week_number', ignoreDuplicates: false }
   );
+  if (error) console.error('saveNote error:', error.message);
 }
 
 async function doLogout() {
@@ -717,113 +722,6 @@ async function doLogout() {
   document.getElementById('login-screen').style.display = 'flex';
 }
 
-// ── AUTH ──
-async function getUser() {
-  const {data:{session}} = await supa().auth.getSession();
-  return session?.user || null;
-}
-
-async function requireAuth() {
-  const user = await getUser();
-  if(!user) { window.location.href='index.html'; return null; }
-  return user;
-}
-
-// ── STATE ──
-let state = {
-  completedDays: {},
-  completedComplements: {},
-  currentWeek: 32,
-  streak: 0
-};
-let notes = {};
-let _userId = null;
-
-// ── SUPABASE SYNC ──
-async function loadFromSupabase(userId) {
-  _userId=userId;
-  const {data:pd,error:pe}=await supa().from('progress').select('data').eq('user_id',userId).maybeSingle();
-  if(pe) console.error('load progress error:',pe.message);
-  if(pd?.data) state={...state,...pd.data};
-  const {data:nd,error:ne}=await supa().from('notes').select('week_number,content').eq('user_id',userId);
-  if(ne) console.error('load notes error:',ne.message);
-  if(nd) nd.forEach(r=>{notes[r.week_number]=r.content;});
-}
-
-async function saveProgress() {
-  if(!_userId)return;
-  const {error:se}=await supa().from('progress').upsert(
-    {user_id:_userId,data:state,updated_at:new Date().toISOString()},
-    {onConflict:'user_id',ignoreDuplicates:false}
-  );
-  if(se) console.error('saveProgress error:',se.message);
-}
-
-async function saveNote(weekNum, content) {
-  if(!_userId) return;
-  notes[weekNum] = content;
-  await supa().from('notes').upsert({
-    user_id: _userId,
-    week_number: weekNum,
-    content: content,
-    updated_at: new Date().toISOString()
-  }, {onConflict:'user_id,week_number'});
-}
-
-// ── PROGRESS UI ──
-function renderProgressHeader(weekNum) {
-  const totalDone = Object.values(state.completedDays).filter(Boolean).length;
-  const weeksCompleted = Object.keys(state.completedComplements).filter(k=>state.completedComplements[k]).length;
-  const chapters = Math.min(totalDone, TOTAL_CHAPTERS);
-  const pct = Math.round(chapters/TOTAL_CHAPTERS*100);
-
-  const pf = document.getElementById('progress-fill');
-  if(pf) pf.style.width = pct+'%';
-  const pp = document.getElementById('progress-pct');
-  if(pp) pp.textContent = pct+'%';
-  const sw = document.getElementById('stat-weeks');
-  if(sw) sw.textContent = `${weeksCompleted} / ${TOTAL_WEEKS}`;
-  const sc = document.getElementById('stat-chapters');
-  if(sc) sc.textContent = `${chapters} / ${TOTAL_CHAPTERS}`;
-  const ss = document.getElementById('stat-streak');
-  if(ss) ss.textContent = totalDone;
-
-  const atPct = getATProgress(chapters);
-  const ntPct = getNTProgress(chapters);
-  const bat = document.getElementById('bar-at');
-  if(bat) bat.style.width = atPct+'%';
-  const pat = document.getElementById('pct-at');
-  if(pat) pat.textContent = atPct+'%';
-  const bnt = document.getElementById('bar-nt');
-  if(bnt) bnt.style.width = ntPct+'%';
-  const pnt = document.getElementById('pct-nt');
-  if(pnt) pnt.textContent = ntPct+'%';
-
-  // Book info only on semanas page
-  if(weekNum !== undefined) {
-    const wData = WEEKS_DATA[weekNum];
-    if(wData) {
-      const book = getBookAtChapter(wData.chaptersStart);
-      const doneDays = wData.days.filter((_,i)=>state.completedDays[`${weekNum}-${i}`]).length;
-      const bookPct = Math.min(100,Math.round(doneDays/wData.days.length*100));
-      const bb = document.getElementById('bar-book');
-      if(bb) bb.style.width = bookPct+'%';
-      const pb = document.getElementById('pct-book');
-      if(pb) pb.textContent = bookPct+'%';
-      const lb = document.getElementById('label-book');
-      if(lb) lb.textContent = book[0];
-      const bv = document.getElementById('book-badge');
-      if(bv) bv.textContent = book[0].toUpperCase();
-      const bvt = document.getElementById('book-verse-text');
-      if(bvt) bvt.textContent = book[4] ? `"${book[4]}"` : '';
-      const bvr = document.getElementById('book-verse-ref');
-      if(bvr) bvr.textContent = book[5]||'';
-    }
-  }
-}
-
-
-// ── AUTH ──
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-password').value;
