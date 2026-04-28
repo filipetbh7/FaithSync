@@ -49,8 +49,8 @@ body{opacity:0;transition:opacity .25s ease;}body.ready{opacity:1;}
   <div class="lcard">
     <div class="lttl">Acesso Familiar</div>
     <div class="lf"><label for="lem">E-mail</label><input type="email" id="lem" placeholder="seu@email.com" autocomplete="email"></div>
-    <div class="lf"><label for="lpw">Senha</label><input type="password" id="lpw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="lbtn" id="lbtn" onclick="doLogin()">Entrar</button>
+    <div class="lf"><label for="lpw">Senha</label><input type="password" id="lpw" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="lbtn" id="lbtn">Entrar</button>
     <div class="lerr" id="lerr"></div>
   </div>
 </div>
@@ -122,6 +122,9 @@ async function initApp(){
   renderIndex();
 }
 
+// Attach login handlers after DOM ready
+document.getElementById('lbtn').addEventListener('click', doLogin);
+document.getElementById('lpw').addEventListener('keydown', e=>{if(e.key==='Enter')doLogin();});
 initApp();
 </script>
 </body>
