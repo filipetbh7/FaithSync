@@ -499,6 +499,7 @@ async function doLogin(){
   else initApp();
 }
 
+function goWeek(n){location.href="semanas.html?week="+n;}
 function wkStatus(wn){
   const wd=WEEKS_DATA[wn];if(!wd)return'none';
   const dd=wd.days.filter((_,i)=>ST.completedDays[wn+'-'+i]).length;
@@ -516,7 +517,7 @@ function renderIndex(){
     if(w.block!==cb){cb=w.block;if(html)html+='</div>';html+='<div class="ibl">'+w.block+'</div><div class="igrd">';}
     const s=wkStatus(w.num);
     const sc=s==='prog'?'sp':s==='done'?'sd':'';
-    html+='<div class="wc '+(w.hasContent?'hc ':'')+sc+'" onclick="location.href='semanas.html?week='+w.num+''">'
+    html+='<div class="wc '+(w.hasContent?'hc ':'')+sc+'" onclick="goWeek('+w.num+')">'
       +'<div class="wch"><div class="wcn">Semana '+w.num+'</div>'
       +'<div class="wcs"><div class="sdt '+s+'"></div><span class="sdlbl">'+sl[s]+'</span></div></div>'
       +'<div class="wcd">'+fmtD(w.ds)+' – '+fmtD(w.de)+'</div>'
