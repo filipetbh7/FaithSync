@@ -145,6 +145,10 @@
   .notes-textarea:focus { border-color:var(--border-gold); }
   .notes-textarea::placeholder { color:var(--text-dim); font-style:italic; }
   .actions-bar { display:flex; gap:0.7rem; flex-wrap:wrap; margin-bottom:3rem; padding-top:1.2rem; border-top:1px solid var(--border-ornate); }
+  .save-main { background:var(--ink-gold-dim) !important; color:var(--parchment-dark) !important; border-color:var(--ink-gold) !important; font-weight:700; }
+  .save-main:hover { background:var(--ink-gold) !important; }
+  .save-main.saving { background:var(--accent-teal) !important; border-color:var(--accent-teal) !important; }
+  .save-main.saved { background:#3a6a3a !important; border-color:#4a8a4a !important; }
   .action-btn { background:none; border:1px solid var(--border-gold); color:var(--ink-gold); font-family:inherit; font-size:0.64rem; letter-spacing:0.2em; padding:0.5rem 1.1rem; cursor:pointer; text-transform:uppercase; transition:all 0.2s; }
   .action-btn:hover { background:var(--glow-gold); border-color:var(--ink-gold-bright); }
   .action-btn.danger { border-color:var(--ink-red); color:var(--ink-red-bright); }
@@ -786,8 +790,9 @@ function renderWeek(weekNum) {
     oninput="onNoteInput(${weekNum},this.value)">${notes[weekNum]||''}</textarea>`;
 
   html+=`<div class="actions-bar fade-in">
-    <button class="action-btn" onclick="exportProgress()">↓ Exportar</button>
-    <button class="action-btn" onclick="document.getElementById('import-input').click()">↑ Importar</button>
+    <button class="action-btn save-main" id="btn-save" onclick="doManualSave()">↑ Salvar Progresso</button>
+    <button class="action-btn" onclick="exportProgress()">↓ Exportar Backup</button>
+    <button class="action-btn" onclick="document.getElementById('import-input').click()">↑ Importar Backup</button>
     <input type="file" id="import-input" accept=".json" style="display:none" onchange="importProgress(event)">
     <button class="action-btn danger" onclick="confirmReset()">Reiniciar Semana</button>
   </div>`;
@@ -808,24 +813,80 @@ function renderPlaceholder(weekNum,wi) {
 }
 
 let _noteTimer = null;
+let _pendingNote = null;
+
 function onNoteInput(weekNum, content) {
+  _pendingNote = {weekNum, content};
   clearTimeout(_noteTimer);
-  _noteTimer = setTimeout(()=>saveNote(weekNum,content), 800);
+  // Auto-save after 1.5s of inactivity
+  _noteTimer = setTimeout(async ()=>{
+    await saveNote(weekNum, content);
+    _pendingNote = null;
+    showToast('Anotação salva ✓');
+  }, 1500);
+}
+
+async function doManualSave() {
+  const btn = document.getElementById('btn-save');
+  if(btn) { btn.textContent = 'Salvando...'; btn.classList.add('saving'); }
+
+  // Flush pending note if any
+  if(_pendingNote) {
+    clearTimeout(_noteTimer);
+    await saveNote(_pendingNote.weekNum, _pendingNote.content);
+    _pendingNote = null;
+  }
+
+  // Save progress
+  const {error} = await supa().from('progress').upsert(
+    {user_id:_userId, data:state, updated_at:new Date().toISOString()},
+    {onConflict:'user_id', ignoreDuplicates:false}
+  );
+
+  if(btn) {
+    btn.classList.remove('saving');
+    if(error) {
+      btn.textContent = 'Erro ao salvar';
+      btn.style.background = 'var(--ink-red)';
+      setTimeout(()=>{ btn.textContent='↑ Salvar Progresso'; btn.style.background=''; },3000);
+      console.error('Save error:', error.message);
+    } else {
+      btn.classList.add('saved');
+      btn.textContent = 'Salvo ✓';
+      setTimeout(()=>{ btn.classList.remove('saved'); btn.textContent='↑ Salvar Progresso'; },2500);
+    }
+  }
 }
 
 async function toggleDay(key,event) {
   if(event) event.stopPropagation();
   state.completedDays[key]=!state.completedDays[key];
-  await saveProgress();
-  renderWeek(currentWeek);
-  showToast(state.completedDays[key]?'Leitura marcada ✓':'Marcação removida');
+  renderWeek(currentWeek); // update UI immediately
+  const {error} = await supa().from('progress').upsert(
+    {user_id:_userId, data:state, updated_at:new Date().toISOString()},
+    {onConflict:'user_id', ignoreDuplicates:false}
+  );
+  if(error) {
+    console.error('toggleDay save error:', error.message);
+    showToast('⚠ Erro ao salvar — use botão Salvar');
+  } else {
+    showToast(state.completedDays[key]?'Leitura marcada ✓':'Marcação removida');
+  }
 }
 
 async function toggleComplement(weekNum) {
   state.completedComplements[weekNum]=!state.completedComplements[weekNum];
-  await saveProgress();
   renderWeek(weekNum);
-  showToast(state.completedComplements[weekNum]?'Complementação concluída ✓':'Marcação removida');
+  const {error} = await supa().from('progress').upsert(
+    {user_id:_userId, data:state, updated_at:new Date().toISOString()},
+    {onConflict:'user_id', ignoreDuplicates:false}
+  );
+  if(error) {
+    console.error('toggleComplement save error:', error.message);
+    showToast('⚠ Erro ao salvar — use botão Salvar');
+  } else {
+    showToast(state.completedComplements[weekNum]?'Complementação concluída ✓':'Marcação removida');
+  }
 }
 
 function exportProgress() {
