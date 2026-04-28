@@ -1,4 +1,10 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="mobile-web-app-capable" content="yes"><title>FaithSync · Semanas</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>FaithSync - Semanas</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>:root{--pd:#1a1208;--pm:#2c1f0e;--pw:#3d2b14;--ig:#c9a84c;--igb:#e8c76a;--igd:#7a6030;--ir:#8b2020;--irb:#c44040;--tp:#e8dcc8;--ts:#b8a888;--td:#7a6e5a;--bo:#5a4020;--bg:#8a6830;--ab:#4a7a9b;--at:#3a8a7a;--gg:rgba(201,168,76,0.15);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--pd);color:var(--tp);font-family:'Palatino Linotype','Palatino','Book Antiqua',Georgia,serif;font-size:16px;line-height:1.7;min-height:100vh;background-image:radial-gradient(ellipse at 20% 20%,rgba(201,168,76,0.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(139,32,32,0.04) 0%,transparent 50%);}
@@ -44,6 +50,7 @@ footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-
 @keyframes fi{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .fi{animation:fi .35s ease both;}
 @media(max-width:600px){.psts{gap:1rem;}.tnav{gap:.4rem;}}
+
 .wnav{display:flex;align-items:center;justify-content:space-between;max-width:900px;margin:.9rem auto 0;padding:0 2rem;gap:.5rem;}
 .wnavb{background:none;border:1px solid var(--bo);color:var(--igd);font-family:inherit;font-size:.63rem;letter-spacing:.15em;cursor:pointer;padding:.32rem .85rem;text-transform:uppercase;transition:all .2s;}
 .wnavb:hover:not(:disabled){border-color:var(--ig);color:var(--ig);}.wnavb:disabled{opacity:.25;cursor:default;}
@@ -68,7 +75,7 @@ footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-
 .dbdg.td{border-color:var(--ig);color:var(--ig);background:rgba(201,168,76,.08);}
 .dchk{width:16px;height:16px;border:1px solid var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .2s;margin-top:2px;}
 .dchk:hover{border-color:var(--ig);background:var(--gg);}.dchk.ck{background:var(--ig);border-color:var(--ig);}
-.dchk.ck::after{content:'✓';color:var(--pd);font-size:.6rem;font-weight:700;}
+.dchk.ck::after{content:"\2713";color:var(--pd);font-size:.6rem;font-weight:700;}
 .ccard{background:var(--pm);border:1px solid var(--bg);padding:1.55rem;margin-bottom:1.7rem;position:relative;box-shadow:0 0 30px rgba(201,168,76,.06);}
 .ccard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--ig),transparent);}
 .cchdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;flex-wrap:wrap;gap:.4rem;}
@@ -86,7 +93,7 @@ footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-
 .rb.judaica .rsrc{color:#c4a44a;}.rb.extra .rsrc{color:var(--ts);}
 .rcnt{font-size:.79rem;color:var(--ts);line-height:1.52;}
 .rcnt ul{list-style:none;padding:0;}.rcnt ul li{padding-left:1rem;position:relative;margin-bottom:.24rem;}
-.rcnt ul li::before{content:'›';position:absolute;left:0;color:var(--igd);}
+.rcnt ul li::before{content:"\203A";position:absolute;left:0;color:var(--igd);}
 .vcnt{background:var(--pm);border:1px solid var(--bo);padding:1.05rem;overflow:hidden;margin-bottom:1.7rem;}
 .vttl{font-size:.68rem;letter-spacing:.2em;color:var(--igd);text-transform:uppercase;margin-bottom:.85rem;text-align:center;}
 .rfcard{background:var(--pm);border:1px solid var(--bo);padding:1.25rem 1.65rem;margin-bottom:1.7rem;position:relative;}
@@ -94,32 +101,34 @@ footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-
 .rforn{position:absolute;top:.72rem;left:.9rem;font-size:2.3rem;color:var(--igd);opacity:.3;line-height:1;}
 .rfref{font-size:.73rem;color:var(--td);font-style:italic;padding-left:1.65rem;margin-bottom:.82rem;}
 .rfq2{font-size:.8rem;color:var(--ig);letter-spacing:.04em;}
-.ntxt{width:100%;min-height:100px;background:var(--pm);border:1px solid var(--bo);color:var(--tp);font-family:inherit;font-size:.88rem;padding:.82rem .95rem;resize:vertical;line-height:1.7;transition:border-color .2s;outline:none;}
+.ntxt{width:100%;min-height:100px;background:var(--pm);border:1px solid var(--bo);color:var(--tp);font-family:inherit;font-size:.88rem;padding:.82rem .95rem;resize:vertical;line-height:1.7;outline:none;}
 .ntxt:focus{border-color:var(--bg);}.ntxt::placeholder{color:var(--td);font-style:italic;}
 .abar{display:flex;gap:.65rem;flex-wrap:wrap;margin-bottom:3rem;padding-top:1.1rem;border-top:1px solid var(--bo);}
 .abtn{background:none;border:1px solid var(--bg);color:var(--ig);font-family:inherit;font-size:.62rem;letter-spacing:.2em;padding:.48rem 1rem;cursor:pointer;text-transform:uppercase;transition:all .2s;}
 .abtn:hover{background:var(--gg);border-color:var(--igb);}.abtn.sv{background:var(--igd);color:var(--pd);border-color:var(--ig);font-weight:700;}
-.abtn.sv:hover{background:var(--ig);}.abtn.svok{background:#3a6a3a!important;border-color:#4a8a4a!important;color:#e8dcc8!important;}
+.abtn.sv:hover{background:var(--ig);}.abtn.svok{background:#3a6a3a !important;border-color:#4a8a4a !important;color:#e8dcc8 !important;}
 .abtn.danger{border-color:var(--ir);color:var(--irb);}.abtn.danger:hover{background:rgba(139,32,32,.15);}
 .phbox{text-align:center;padding:3rem 2rem;border:1px solid var(--bo);background:var(--pm);}
 @media(max-width:600px){.dgrd{grid-template-columns:1fr;}.rgrd{grid-template-columns:1fr;}}
-</style></head><body>
-<header class="hdr"><div class="hdrorn">✦ FaithSync ✦</div><h1 class="hdrttl">Plano de Leitura Bíblica</h1><p class="hdrsub">Estudo em Família · Gênesis ao Apocalipse</p></header><div class="tnav"><button class="tbtn" onclick="location.href='index.html'">≡ Índice</button><span class="tsep">·</span><button class="tbtn act" onclick="location.href='semanas.html'">📖 Semanas</button><span class="tsep">·</span><button class="tbtn" onclick="location.href='anotacoes.html'">✎ Anotações</button><span class="tsep">·</span><span class="uinf" id="uemail"></span><button class="lout" onclick="doLogout()">sair</button></div>
-<div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil" style="width:0%"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas concluídas</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Capítulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Livro Atual</div><div class="sbw"><div class="sbm"><div class="sbf fg" id="bbk" style="width:0%"></div></div><span class="spct" id="pbk">0%</span></div><div style="font-size:.73rem;color:var(--ts);margin-top:.1rem" id="lbk">—</div></div><div class="si2"><div class="sl2">Velho Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" style="width:0%"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 capítulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" style="width:0%"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 capítulos</div></div></div><div class="bvb"><div class="bbdg" id="bbdg">—</div><div><div class="bvt" id="bvt" style="color:var(--td)">Selecione uma semana.</div><div class="bvr" id="bvr"></div></div></div></div>
+</style>
+</head>
+<body>
+<header class="hdr"><div class="hdrorn">&#10022; FaithSync &#10022;</div><h1 class="hdrttl">Plano de Leitura B&iacute;blica</h1><p class="hdrsub">Estudo em Fam&iacute;lia - G&ecirc;nesis ao Apocalipse</p></header><div class="tnav"><button class="tbtn" data-nav="index.html">&#205;ndice</button><span class="tsep">|</span><button class="tbtn act" data-nav="semanas.html">Semanas</button><span class="tsep">|</span><button class="tbtn" data-nav="anotacoes.html">Anota&ccedil;&otilde;es</button><span class="tsep">|</span><span class="uinf" id="uemail"></span><button class="lout" id="btnLogout">sair</button></div><div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil" style="width:0%"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas conclu&iacute;das</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Cap&iacute;tulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Livro Atual</div><div class="sbw"><div class="sbm"><div class="sbf fg" id="bbk" style="width:0%"></div></div><span class="spct" id="pbk">0%</span></div><div style="font-size:.73rem;color:var(--ts);margin-top:.1rem" id="lbk">-</div></div><div class="si2"><div class="sl2">Velho Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" style="width:0%"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 cap&iacute;tulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" style="width:0%"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 cap&iacute;tulos</div></div></div><div class="bvb"><div class="bbdg" id="bbdg">-</div><div><div class="bvt" id="bvt" style="color:var(--td)">Selecione uma semana.</div><div class="bvr" id="bvr"></div></div></div></div>
 <div class="wnav">
-  <button class="wnavb" id="btnP" onclick="navWk(-1)">← Anterior</button>
-  <div style="text-align:center"><div style="font-size:.6rem;letter-spacing:.2em;color:var(--td);text-transform:uppercase" id="wknum">Semana —</div></div>
-  <button class="wnavb" id="btnN" onclick="navWk(1)">Próxima →</button>
+  <button class="wnavb" id="btnP">&larr; Anterior</button>
+  <div style="text-align:center"><div style="font-size:.6rem;letter-spacing:.2em;color:var(--td);text-transform:uppercase" id="wknum">Semana -</div></div>
+  <button class="wnavb" id="btnN">Pr&oacute;xima &rarr;</button>
 </div>
-<div class="wlbl"><div class="wlblm" id="wkttl">—</div><div class="wlbls" id="wksub">—</div></div>
+<div class="wlbl"><div class="wlblm" id="wkttl">-</div><div class="wlbls" id="wksub">-</div></div>
 <main class="mc" id="mc"></main>
 <div class="toast" id="toast"></div>
-<footer>FaithSync · Sincronizando a fé em família</footer>
+<footer>FaithSync | Sincronizando a f&eacute; em fam&iacute;lia</footer>
 <script>
 
 const SUPABASE_URL='https://shhtdamjxoxxxsyeqhhi.supabase.co';
 const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
 const TOTAL_CHAPTERS=1189,AT_CHAPTERS=929,NT_CHAPTERS=260,TOTAL_WEEKS=87;
+
 const BOOKS = [
   ["Gênesis",50,"AT",1,"No princípio, criou Deus os céus e a terra.","Gênesis 1:1"],
   ["Êxodo",40,"AT",51,"Eu sou o que sou.","Êxodo 3:14"],
@@ -277,80 +286,92 @@ const WEEKS_INDEX = [
   { num:86, ds:new Date(2027,11,13), de:new Date(2027,11,19), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
   { num:87, ds:new Date(2027,11,20), de:new Date(2027,11,26), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" }
 ];
+
 function getBook(n){for(let i=BOOKS.length-1;i>=0;i--)if(n>=BOOKS[i][3])return BOOKS[i];return BOOKS[0];}
 function atPct(n){return Math.min(100,Math.round(Math.max(0,n-1)/AT_CHAPTERS*100));}
 function ntPct(n){if(n<930)return 0;return Math.min(100,Math.round((n-930)/NT_CHAPTERS*100));}
 function fmtD(d){return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});}
 function fmtDFull(d){return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});}
 function isToday(d){return d.toDateString()===new Date().toDateString();}
-function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function toast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+
 let _sb=null;
 function sb(){
   if(!_sb)_sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
   return _sb;
 }
 async function getUser(){
-  const{data:{session},error}=await sb().auth.getSession();
-  if(error)console.error('getSession:',error.message);
-  console.log('user:',session?.user?.email||'none');
-  return session?.user||null;
+  const r=await sb().auth.getSession();
+  if(r.error)console.error('getSession:',r.error.message);
+  return r.data.session?r.data.session.user:null;
 }
 async function doLogout(){await sb().auth.signOut();window.location.href='index.html';}
+
 let ST={completedDays:{},completedComplements:{},currentWeek:32};
 let NT_NOTES={};
 let UID=null;
+
 async function dbLoad(uid){
   UID=uid;
   console.log('dbLoad for:',uid);
-  const{data:pd,error:pe}=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
-  if(pe)console.error('load progress:',pe.message);
-  if(pd?.data){ST={...ST,...pd.data};console.log('progress ok');}
+  const r1=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
+  if(r1.error)console.error('load progress:',r1.error.message);
+  if(r1.data&&r1.data.data){ST=Object.assign({},ST,r1.data.data);console.log('progress loaded');}
   else console.log('no progress yet');
-  const{data:nd,error:ne}=await sb().from('notes').select('week_number,content').eq('user_id',uid);
-  if(ne)console.error('load notes:',ne.message);
-  if(nd){nd.forEach(r=>NT_NOTES[r.week_number]=r.content);console.log('notes:',nd.length);}
+  const r2=await sb().from('notes').select('week_number,content').eq('user_id',uid);
+  if(r2.error)console.error('load notes:',r2.error.message);
+  if(r2.data){r2.data.forEach(r=>NT_NOTES[r.week_number]=r.content);console.log('notes:',r2.data.length);}
 }
 async function dbSave(){
-  if(!UID){console.warn('dbSave: no UID');return false;}
-  const{error}=await sb().from('progress').upsert({user_id:UID,data:ST,updated_at:new Date().toISOString()},{onConflict:'user_id',ignoreDuplicates:false});
-  if(error){console.error('dbSave:',error.code,error.message);return false;}
-  console.log('dbSave ok');return true;
+  if(!UID)return false;
+  const r=await sb().from('progress').upsert({user_id:UID,data:ST,updated_at:new Date().toISOString()},{onConflict:'user_id',ignoreDuplicates:false});
+  if(r.error){console.error('dbSave:',r.error.message);return false;}
+  return true;
 }
 async function dbSaveNote(wk,txt){
   if(!UID)return;
   NT_NOTES[wk]=txt;
-  const{error}=await sb().from('notes').upsert({user_id:UID,week_number:wk,content:txt,updated_at:new Date().toISOString()},{onConflict:'user_id,week_number',ignoreDuplicates:false});
-  if(error)console.error('dbSaveNote:',error.message);
+  const r=await sb().from('notes').upsert({user_id:UID,week_number:wk,content:txt,updated_at:new Date().toISOString()},{onConflict:'user_id,week_number',ignoreDuplicates:false});
+  if(r.error)console.error('dbSaveNote:',r.error.message);
 }
+
 function renderPH(wk){
   const tot=Object.values(ST.completedDays).filter(Boolean).length;
   const wkd=Object.keys(ST.completedComplements).filter(k=>ST.completedComplements[k]).length;
   const ch=Math.min(tot,TOTAL_CHAPTERS);
   const pct=Math.round(ch/TOTAL_CHAPTERS*100);
-  const $=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  const $w=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=v+'%';};
-  $w('pfil',pct);$('ppct',pct+'%');
-  $('swk',wkd+' / '+TOTAL_WEEKS);$('sch',ch+' / '+TOTAL_CHAPTERS);$('sst',tot);
-  $w('bat',atPct(ch));$('pat',atPct(ch)+'%');
-  $w('bnt',ntPct(ch));$('pnt',ntPct(ch)+'%');
-  if(wk!==undefined&&WEEKS_DATA){
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const setW=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=v+'%';};
+  setW('pfil',pct);set('ppct',pct+'%');
+  set('swk',wkd+' / '+TOTAL_WEEKS);
+  set('sch',ch+' / '+TOTAL_CHAPTERS);
+  set('sst',tot);
+  setW('bat',atPct(ch));set('pat',atPct(ch)+'%');
+  setW('bnt',ntPct(ch));set('pnt',ntPct(ch)+'%');
+  if(wk!==undefined&&typeof WEEKS_DATA!=='undefined'){
     const wd=WEEKS_DATA[wk];
     if(wd){
       const bk=getBook(wd.chaptersStart);
       let bkCh=0;
       Object.keys(ST.completedDays).forEach(key=>{
         if(!ST.completedDays[key])return;
-        const[wn]=key.split('-').map(Number);
+        const wn=parseInt(key.split('-')[0]);
         const d2=WEEKS_DATA[wn];if(!d2)return;
         if(getBook(d2.chaptersStart)[3]===bk[3])bkCh++;
       });
       const bp=Math.min(100,Math.round(bkCh/bk[1]*100));
-      $w('bbk',bp);$('pbk',bp+'%');$('lbk',bk[0]);
-      $('bbdg',bk[0].toUpperCase());
-      $('bvt',bk[4]?'"'+bk[4]+'"':' ');$('bvr',bk[5]||'');
+      setW('bbk',bp);set('pbk',bp+'%');set('lbk',bk[0]);
+      set('bbdg',bk[0].toUpperCase());
+      set('bvt',bk[4]?'"'+bk[4]+'"':' ');
+      set('bvr',bk[5]||'');
     }
   }
+}
+
+function setupNav(){
+  document.querySelectorAll('[data-nav]').forEach(b=>{b.onclick=()=>window.location.href=b.dataset.nav;});
+  const lo=document.getElementById('btnLogout');if(lo)lo.onclick=doLogout;
 }
 const WEEKS_DATA = {
   32: {
@@ -579,8 +600,22 @@ function generateDanielTimeline(){return `
   </svg>`;}
 
 let CW=32;
-function getWkFromURL(){const p=new URLSearchParams(location.search);return parseInt(p.get('week'))||ST.currentWeek||32;}
-function navWk(d){const n=CW+d;if(n<1||n>TOTAL_WEEKS)return;CW=n;ST.currentWeek=n;dbSave();history.replaceState(null,'','semanas.html?week='+n);renderWk(n);window.scrollTo({top:0,behavior:'smooth'});}
+
+function getWkFromURL(){
+  const p=new URLSearchParams(location.search);
+  return parseInt(p.get('week'))||ST.currentWeek||32;
+}
+
+function navWk(d){
+  const n=CW+d;
+  if(n<1||n>TOTAL_WEEKS)return;
+  CW=n;
+  ST.currentWeek=n;
+  dbSave();
+  history.replaceState(null,'','semanas.html?week='+n);
+  renderWk(n);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 
 function renderWk(wn){
   CW=wn;
@@ -588,80 +623,114 @@ function renderWk(wn){
   document.getElementById('btnP').disabled=wn<=1;
   document.getElementById('btnN').disabled=wn>=TOTAL_WEEKS;
   document.getElementById('wknum').textContent='Semana '+wn;
-  document.getElementById('wkttl').textContent=WEEKS_DATA[wn]?.title||'Semana '+wn;
-  document.getElementById('wksub').textContent=fmtD(wi.ds)+' – '+fmtD(wi.de)+' · '+wi.range;
+  document.getElementById('wkttl').textContent=(WEEKS_DATA[wn]&&WEEKS_DATA[wn].title)||'Semana '+wn;
+  document.getElementById('wksub').textContent=fmtD(wi.ds)+' - '+fmtD(wi.de)+' | '+wi.range;
   renderPH(wn);
+
   const wk=WEEKS_DATA[wn];
-  if(!wk){renderPH2(wn,wi);return;}
+  const mc=document.getElementById('mc');
+
+  if(!wk){
+    mc.innerHTML='<div class="phbox"><div style="font-size:1.3rem;color:var(--igd);margin-bottom:.7rem">*</div>'+
+      '<div style="font-size:.82rem;letter-spacing:.15em;color:var(--td)">SEMANA '+wn+' | '+wi.block+'</div>'+
+      '<div style="margin-top:.7rem;font-size:.84rem;color:var(--td);font-style:italic">'+wi.range+'<br><br>Este conte&uacute;do ser&aacute; adicionado em breve.</div>'+
+      '<button class="abtn" id="btnBack" style="margin-top:1.2rem">&larr; Voltar ao &Iacute;ndice</button></div>';
+    const bb=document.getElementById('btnBack');
+    if(bb)bb.onclick=()=>location.href='index.html';
+    return;
+  }
+
   let h='';
-  h+='<div class="sh fi">Leitura Diária · 15 minutos por dia</div>';
-  h+='<div class="dgrd fi">';
+  h+='<div class="sh">Leitura Di&aacute;ria | 15 minutos por dia</div>';
+  h+='<div class="dgrd">';
   wk.days.forEach((day,i)=>{
     const key=wn+'-'+i;
     const ck=!!ST.completedDays[key];
     const td=isToday(day.date);
-    h+='<div class="dc'+(ck?' ck':'')+(td?' td':'')+'" onclick="togDayK(\'+key+\')">'
-      +'<div class="dch"><div><div class="dlbl">'+day.dayOfWeek+'</div><div class="ddt">'+fmtD(day.date)+'</div></div>'
-      +'<div class="dchk'+(ck?' ck':'')+'" onclick="togDayK(\'+key+\')"></div></div>'
-      +'<div class="dr">'+day.reading+(day.verses?'<span style="color:var(--td);font-size:.82em"> '+day.verses+'</span>':'')+'</div>'
-      +'<div class="dctx">'+day.context+'</div>'
-      +(td?'<div class="dbdg td">Hoje</div>':ck?'<div class="dbdg">Lido ✓</div>':'')
-      +'</div>';
+    h+='<div class="dc'+(ck?' ck':'')+(td?' td':'')+'" data-key="'+key+'">';
+    h+='<div class="dch"><div><div class="dlbl">'+esc(day.dayOfWeek)+'</div><div class="ddt">'+fmtD(day.date)+'</div></div>';
+    h+='<div class="dchk'+(ck?' ck':'')+'" data-key="'+key+'"></div></div>';
+    h+='<div class="dr">'+esc(day.reading)+(day.verses?' <span style="color:var(--td);font-size:.82em">'+esc(day.verses)+'</span>':'')+'</div>';
+    h+='<div class="dctx">'+esc(day.context)+'</div>';
+    h+=(td?'<div class="dbdg td">Hoje</div>':ck?'<div class="dbdg">Lido</div>':'');
+    h+='</div>';
   });
   h+='</div>';
-  h+='<div class="sh fi">Visual da Semana</div>';
-  h+='<div class="vcnt fi"><div class="vttl">Os Quatro Impérios de Daniel · Mapa Temporal</div>'+wk.visual+'</div>';
+
+  h+='<div class="sh">Visual da Semana</div>';
+  h+='<div class="vcnt"><div class="vttl">Os Quatro Imp&eacute;rios de Daniel | Mapa Temporal</div>'+wk.visual+'</div>';
+
   const cd=!!ST.completedComplements[wn];
-  h+='<div class="sh fi">Complementação Semanal · ~1 hora · '+fmtD(wk.complement.date)+'</div>';
-  h+='<div class="ccard fi"><div class="cchdr"><div class="cttl">Estudo Complementar — '+wk.title+'</div>'
-    +'<div style="display:flex;align-items:center;gap:.7rem"><div class="cdt">'+fmtDFull(wk.complement.date)+'</div>'
-    +'<div class="dchk'+(cd?' ck':'')+'" onclick="togComp('+wn+')"></div></div></div>'
-    +'<p class="cintro">'+wk.complement.intro+'</p><div class="rgrd">';
+  h+='<div class="sh">Complementa&ccedil;&atilde;o Semanal | ~1 hora | '+fmtD(wk.complement.date)+'</div>';
+  h+='<div class="ccard"><div class="cchdr"><div class="cttl">Estudo Complementar - '+esc(wk.title)+'</div>';
+  h+='<div style="display:flex;align-items:center;gap:.7rem"><div class="cdt">'+fmtDFull(wk.complement.date)+'</div>';
+  h+='<div class="dchk'+(cd?' ck':'')+'" data-comp="'+wn+'"></div></div></div>';
+  h+='<p class="cintro">'+esc(wk.complement.intro)+'</p><div class="rgrd">';
   wk.complement.resources.forEach(r=>{
-    h+='<div class="rb '+r.type+'"><div class="rsrc">'+r.title+'</div><div class="rcnt"><ul>'+r.items.map(x=>'<li>'+x+'</li>').join('')+'</ul></div></div>';
+    h+='<div class="rb '+r.type+'"><div class="rsrc">'+esc(r.title)+'</div><div class="rcnt"><ul>';
+    r.items.forEach(x=>{h+='<li>'+esc(x)+'</li>';});
+    h+='</ul></div></div>';
   });
   h+='</div></div>';
-  h+='<div class="sh fi">Reflexão da Semana</div>';
-  h+='<div class="rfcard fi"><div class="rforn">"</div><div class="rfq">'+wk.reflection.verse+'</div>'
-    +'<div class="rfref">'+wk.reflection.reference+'</div><div class="rfq2">✦ '+wk.reflection.question+'</div></div>';
-  h+='<div class="sh fi">Anotações da Semana</div>';
-  h+='<textarea class="ntxt fi" placeholder="Insights, perguntas, versículos marcantes, observações da família..." oninput="onNote('+wn+',this.value)">'+esc(NT_NOTES[wn]||'')+'</textarea>';
-  h+='<div class="abar fi">'
-    +'<button class="abtn sv" id="btnSv" onclick="doSave()">↑ Salvar</button>'
-    +'<button class="abtn" onclick="doExport()">↓ Exportar Backup</button>'
-    +'<button class="abtn" onclick="document.getElementById('fImp').click()">↑ Importar Backup</button>'
-    +'<input type="file" id="fImp" accept=".json" style="display:none" onchange="doImport(event)">'
-    +'<button class="abtn danger" onclick="doReset()">Reiniciar Semana</button>'
-    +'</div>';
-  document.getElementById('mc').innerHTML=h;
+
+  h+='<div class="sh">Reflex&atilde;o da Semana</div>';
+  h+='<div class="rfcard"><div class="rforn">"</div><div class="rfq">'+esc(wk.reflection.verse)+'</div>';
+  h+='<div class="rfref">'+esc(wk.reflection.reference)+'</div><div class="rfq2">* '+esc(wk.reflection.question)+'</div></div>';
+
+  h+='<div class="sh">Anota&ccedil;&otilde;es da Semana</div>';
+  h+='<textarea class="ntxt" id="ntxt" data-week="'+wn+'" placeholder="Insights, perguntas, vers&iacute;culos marcantes...">'+esc(NT_NOTES[wn]||'')+'</textarea>';
+
+  h+='<div class="abar">';
+  h+='<button class="abtn sv" id="btnSv">Salvar</button>';
+  h+='<button class="abtn" id="btnExp">Exportar Backup</button>';
+  h+='<button class="abtn" id="btnImp">Importar Backup</button>';
+  h+='<input type="file" id="fImp" accept=".json" style="display:none">';
+  h+='<button class="abtn danger" id="btnRst">Reiniciar Semana</button>';
+  h+='</div>';
+
+  mc.innerHTML=h;
+  attachWeekHandlers();
 }
 
-function renderPH2(wn,wi){
-  document.getElementById('mc').innerHTML='<div class="phbox fi"><div style="font-size:1.3rem;color:var(--igd);margin-bottom:.7rem">✦</div>'
-    +'<div style="font-size:.82rem;letter-spacing:.15em;color:var(--td)">SEMANA '+wn+' · '+wi.block+'</div>'
-    +'<div style="margin-top:.7rem;font-size:.84rem;color:var(--td);font-style:italic">'+wi.range+'<br><br>Este conteúdo será adicionado em breve.</div>'
-    +'<button class="abtn" style="margin-top:1.2rem" onclick="location.href='index.html'">← Voltar ao Índice</button></div>';
+function attachWeekHandlers(){
+  document.querySelectorAll('[data-key]').forEach(el=>{
+    el.onclick=(ev)=>{ev.stopPropagation();togDay(el.dataset.key);};
+  });
+  document.querySelectorAll('[data-comp]').forEach(el=>{
+    el.onclick=(ev)=>{ev.stopPropagation();togComp(parseInt(el.dataset.comp));};
+  });
+  const nt=document.getElementById('ntxt');
+  if(nt){
+    nt.oninput=()=>{
+      const wn=parseInt(nt.dataset.week);
+      clearTimeout(_nt);
+      _np={wn:wn,txt:nt.value};
+      _nt=setTimeout(async()=>{await dbSaveNote(wn,nt.value);_np=null;},1500);
+    };
+  }
+  const bSv=document.getElementById('btnSv');if(bSv)bSv.onclick=doSave;
+  const bEx=document.getElementById('btnExp');if(bEx)bEx.onclick=doExport;
+  const bIm=document.getElementById('btnImp');if(bIm)bIm.onclick=()=>document.getElementById('fImp').click();
+  const fI=document.getElementById('fImp');if(fI)fI.onchange=doImport;
+  const bR=document.getElementById('btnRst');if(bR)bR.onclick=doReset;
+  document.getElementById('btnP').onclick=()=>navWk(-1);
+  document.getElementById('btnN').onclick=()=>navWk(1);
 }
 
 let _nt=null,_np=null;
-function onNote(wn,txt){_np={wn,txt};clearTimeout(_nt);_nt=setTimeout(async()=>{await dbSaveNote(wn,txt);_np=null;},1500);}
 
-function togDayK(key){togDay(key,null);}
-async function togDay(key,ev){
-  if(ev)ev.stopPropagation();
+async function togDay(key){
   ST.completedDays[key]=!ST.completedDays[key];
   renderWk(CW);
-  const{error}=await sb().from('progress').upsert({user_id:UID,data:ST,updated_at:new Date().toISOString()},{onConflict:'user_id',ignoreDuplicates:false});
-  if(error){console.error('togDay:',error.message);toast('⚠ Erro ao salvar — use botão Salvar');}
-  else toast(ST.completedDays[key]?'Leitura marcada ✓':'Marcação removida');
+  const ok=await dbSave();
+  toast(ok?(ST.completedDays[key]?'Leitura marcada':'Marcacao removida'):'Erro - use botao Salvar');
 }
 
 async function togComp(wn){
   ST.completedComplements[wn]=!ST.completedComplements[wn];
   renderWk(wn);
-  const{error}=await sb().from('progress').upsert({user_id:UID,data:ST,updated_at:new Date().toISOString()},{onConflict:'user_id',ignoreDuplicates:false});
-  if(error){console.error('togComp:',error.message);toast('⚠ Erro ao salvar — use botão Salvar');}
-  else toast(ST.completedComplements[wn]?'Complementação concluída ✓':'Marcação removida');
+  const ok=await dbSave();
+  toast(ok?(ST.completedComplements[wn]?'Complementacao concluida':'Marcacao removida'):'Erro - use botao Salvar');
 }
 
 async function doSave(){
@@ -671,48 +740,59 @@ async function doSave(){
   const ok=await dbSave();
   if(btn){
     btn.disabled=false;
-    if(ok){btn.classList.add('svok');btn.textContent='Salvo ✓';setTimeout(()=>{btn.classList.remove('svok');btn.textContent='↑ Salvar';},2500);}
-    else{btn.textContent='Erro!';setTimeout(()=>btn.textContent='↑ Salvar',3000);}
+    if(ok){btn.classList.add('svok');btn.textContent='Salvo';setTimeout(()=>{btn.classList.remove('svok');btn.textContent='Salvar';},2500);}
+    else{btn.textContent='Erro!';setTimeout(()=>btn.textContent='Salvar',3000);}
   }
 }
 
 function doExport(){
   const blob=new Blob([JSON.stringify({state:ST,notes:NT_NOTES},null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
   a.href=url;a.download='faithsync_'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();URL.revokeObjectURL(url);toast('Backup exportado!');
+  a.click();URL.revokeObjectURL(url);
+  toast('Backup exportado');
 }
 
 async function doImport(ev){
-  const file=ev.target.files[0];if(!file)return;
+  const file=ev.target.files[0];
+  if(!file)return;
   const r=new FileReader();
-  r.onload=async e=>{
+  r.onload=async(e)=>{
     try{
       const d=JSON.parse(e.target.result);
-      if(d.state)ST={...ST,...d.state};
-      if(d.notes)for(const[k,v]of Object.entries(d.notes))await dbSaveNote(parseInt(k),v);
-      await dbSave();renderWk(CW);toast('Importado ✓');
-    }catch{toast('Erro ao importar');}
+      if(d.state)ST=Object.assign({},ST,d.state);
+      if(d.notes){
+        for(const k in d.notes){await dbSaveNote(parseInt(k),d.notes[k]);}
+      }
+      await dbSave();renderWk(CW);toast('Importado');
+    }catch(err){toast('Erro ao importar');}
   };
   r.readAsText(file);
 }
 
 function doReset(){
-  if(confirm('Reiniciar marcações desta semana? Anotações mantidas.')){
-    WEEKS_DATA[CW]?.days.forEach((_,i)=>delete ST.completedDays[CW+'-'+i]);
+  if(confirm('Reiniciar marcacoes desta semana? Anotacoes mantidas.')){
+    if(WEEKS_DATA[CW]){
+      WEEKS_DATA[CW].days.forEach((_,i)=>{delete ST.completedDays[CW+'-'+i];});
+    }
     delete ST.completedComplements[CW];
-    dbSave();renderWk(CW);toast('Semana reiniciada');
+    dbSave();renderWk(CW);
+    toast('Semana reiniciada');
   }
 }
 
 async function init(){
+  setupNav();
   const user=await getUser();
   if(!user){location.href='index.html';return;}
-  const {data:{session:sess}}=await sb().auth.getSession();
-  if(sess) await sb().auth.setSession({access_token:sess.access_token,refresh_token:sess.refresh_token});
   await dbLoad(user.id);
   const e=document.getElementById('uemail');if(e)e.textContent=user.email;
   renderWk(getWkFromURL());
 }
+
 init();
-</script></body></html>
+
+</script>
+</body>
+</html>

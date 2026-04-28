@@ -1,4 +1,10 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="mobile-web-app-capable" content="yes"><title>FaithSync · Anotações</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>FaithSync - Anotacoes</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>:root{--pd:#1a1208;--pm:#2c1f0e;--pw:#3d2b14;--ig:#c9a84c;--igb:#e8c76a;--igd:#7a6030;--ir:#8b2020;--irb:#c44040;--tp:#e8dcc8;--ts:#b8a888;--td:#7a6e5a;--bo:#5a4020;--bg:#8a6830;--ab:#4a7a9b;--at:#3a8a7a;--gg:rgba(201,168,76,0.15);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--pd);color:var(--tp);font-family:'Palatino Linotype','Palatino','Book Antiqua',Georgia,serif;font-size:16px;line-height:1.7;min-height:100vh;background-image:radial-gradient(ellipse at 20% 20%,rgba(201,168,76,0.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(139,32,32,0.04) 0%,transparent 50%);}
@@ -44,6 +50,7 @@ footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-
 @keyframes fi{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .fi{animation:fi .35s ease both;}
 @media(max-width:600px){.psts{gap:1rem;}.tnav{gap:.4rem;}}
+
 .npg{max-width:900px;margin:1.4rem auto 3rem;padding:0 2rem;}
 .nphdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:.5rem;}
 .npttl{font-size:.93rem;color:var(--igb);font-weight:700;letter-spacing:.08em;}
@@ -58,20 +65,22 @@ footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-
 .nel{font-size:.6rem;letter-spacing:.15em;color:var(--igd);text-transform:uppercase;cursor:pointer;padding:.26rem .52rem;border:1px solid var(--bo);transition:all .2s;background:none;font-family:inherit;white-space:nowrap;}
 .nel:hover{border-color:var(--ig);color:var(--ig);}
 .neb{padding:.88rem .95rem;font-size:.87rem;color:var(--ts);line-height:1.7;white-space:pre-wrap;border-left:3px solid var(--igd);}
-</style></head><body>
-<header class="hdr"><div class="hdrorn">✦ FaithSync ✦</div><h1 class="hdrttl">Plano de Leitura Bíblica</h1><p class="hdrsub">Estudo em Família · Gênesis ao Apocalipse</p></header><div class="tnav"><button class="tbtn" onclick="location.href='index.html'">≡ Índice</button><span class="tsep">·</span><button class="tbtn" onclick="location.href='semanas.html'">📖 Semanas</button><span class="tsep">·</span><button class="tbtn act" onclick="location.href='anotacoes.html'">✎ Anotações</button><span class="tsep">·</span><span class="uinf" id="uemail"></span><button class="lout" onclick="doLogout()">sair</button></div>
-<div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil" style="width:0%"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas concluídas</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Capítulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Velho Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" style="width:0%"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 capítulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" style="width:0%"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 capítulos</div></div></div></div>
+</style>
+</head>
+<body>
+<header class="hdr"><div class="hdrorn">&#10022; FaithSync &#10022;</div><h1 class="hdrttl">Plano de Leitura B&iacute;blica</h1><p class="hdrsub">Estudo em Fam&iacute;lia - G&ecirc;nesis ao Apocalipse</p></header><div class="tnav"><button class="tbtn" data-nav="index.html">&#205;ndice</button><span class="tsep">|</span><button class="tbtn" data-nav="semanas.html">Semanas</button><span class="tsep">|</span><button class="tbtn act" data-nav="anotacoes.html">Anota&ccedil;&otilde;es</button><span class="tsep">|</span><span class="uinf" id="uemail"></span><button class="lout" id="btnLogout">sair</button></div><div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil" style="width:0%"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas conclu&iacute;das</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Cap&iacute;tulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Livro Atual</div><div class="sbw"><div class="sbm"><div class="sbf fg" id="bbk" style="width:0%"></div></div><span class="spct" id="pbk">0%</span></div><div style="font-size:.73rem;color:var(--ts);margin-top:.1rem" id="lbk">-</div></div><div class="si2"><div class="sl2">Velho Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" style="width:0%"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 cap&iacute;tulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" style="width:0%"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 cap&iacute;tulos</div></div></div><div class="bvb"><div class="bbdg" id="bbdg">-</div><div><div class="bvt" id="bvt" style="color:var(--td)">Selecione uma semana.</div><div class="bvr" id="bvr"></div></div></div></div>
 <div class="npg">
-  <div class="nphdr"><div><div class="npttl">✎ Anotações do Plano</div><div class="npsub">Apenas leitura · Edite na página de cada semana · Ordenadas por semana do plano</div></div></div>
+  <div class="nphdr"><div><div class="npttl">Anota&ccedil;&otilde;es do Plano</div><div class="npsub">Apenas leitura | Edite na p&aacute;gina de cada semana | Ordenadas por semana do plano</div></div></div>
   <div id="nl"></div>
 </div>
 <div class="toast" id="toast"></div>
-<footer>FaithSync · Sincronizando a fé em família</footer>
+<footer>FaithSync | Sincronizando a f&eacute; em fam&iacute;lia</footer>
 <script>
 
 const SUPABASE_URL='https://shhtdamjxoxxxsyeqhhi.supabase.co';
 const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
 const TOTAL_CHAPTERS=1189,AT_CHAPTERS=929,NT_CHAPTERS=260,TOTAL_WEEKS=87;
+
 const BOOKS = [
   ["Gênesis",50,"AT",1,"No princípio, criou Deus os céus e a terra.","Gênesis 1:1"],
   ["Êxodo",40,"AT",51,"Eu sou o que sou.","Êxodo 3:14"],
@@ -229,108 +238,125 @@ const WEEKS_INDEX = [
   { num:86, ds:new Date(2027,11,13), de:new Date(2027,11,19), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
   { num:87, ds:new Date(2027,11,20), de:new Date(2027,11,26), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" }
 ];
+
 function getBook(n){for(let i=BOOKS.length-1;i>=0;i--)if(n>=BOOKS[i][3])return BOOKS[i];return BOOKS[0];}
 function atPct(n){return Math.min(100,Math.round(Math.max(0,n-1)/AT_CHAPTERS*100));}
 function ntPct(n){if(n<930)return 0;return Math.min(100,Math.round((n-930)/NT_CHAPTERS*100));}
 function fmtD(d){return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});}
 function fmtDFull(d){return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});}
 function isToday(d){return d.toDateString()===new Date().toDateString();}
-function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function toast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+
 let _sb=null;
 function sb(){
   if(!_sb)_sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
   return _sb;
 }
 async function getUser(){
-  const{data:{session},error}=await sb().auth.getSession();
-  if(error)console.error('getSession:',error.message);
-  console.log('user:',session?.user?.email||'none');
-  return session?.user||null;
+  const r=await sb().auth.getSession();
+  if(r.error)console.error('getSession:',r.error.message);
+  return r.data.session?r.data.session.user:null;
 }
 async function doLogout(){await sb().auth.signOut();window.location.href='index.html';}
+
 let ST={completedDays:{},completedComplements:{},currentWeek:32};
 let NT_NOTES={};
 let UID=null;
+
 async function dbLoad(uid){
   UID=uid;
   console.log('dbLoad for:',uid);
-  const{data:pd,error:pe}=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
-  if(pe)console.error('load progress:',pe.message);
-  if(pd?.data){ST={...ST,...pd.data};console.log('progress ok');}
+  const r1=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
+  if(r1.error)console.error('load progress:',r1.error.message);
+  if(r1.data&&r1.data.data){ST=Object.assign({},ST,r1.data.data);console.log('progress loaded');}
   else console.log('no progress yet');
-  const{data:nd,error:ne}=await sb().from('notes').select('week_number,content').eq('user_id',uid);
-  if(ne)console.error('load notes:',ne.message);
-  if(nd){nd.forEach(r=>NT_NOTES[r.week_number]=r.content);console.log('notes:',nd.length);}
+  const r2=await sb().from('notes').select('week_number,content').eq('user_id',uid);
+  if(r2.error)console.error('load notes:',r2.error.message);
+  if(r2.data){r2.data.forEach(r=>NT_NOTES[r.week_number]=r.content);console.log('notes:',r2.data.length);}
 }
 async function dbSave(){
-  if(!UID){console.warn('dbSave: no UID');return false;}
-  const{error}=await sb().from('progress').upsert({user_id:UID,data:ST,updated_at:new Date().toISOString()},{onConflict:'user_id',ignoreDuplicates:false});
-  if(error){console.error('dbSave:',error.code,error.message);return false;}
-  console.log('dbSave ok');return true;
+  if(!UID)return false;
+  const r=await sb().from('progress').upsert({user_id:UID,data:ST,updated_at:new Date().toISOString()},{onConflict:'user_id',ignoreDuplicates:false});
+  if(r.error){console.error('dbSave:',r.error.message);return false;}
+  return true;
 }
 async function dbSaveNote(wk,txt){
   if(!UID)return;
   NT_NOTES[wk]=txt;
-  const{error}=await sb().from('notes').upsert({user_id:UID,week_number:wk,content:txt,updated_at:new Date().toISOString()},{onConflict:'user_id,week_number',ignoreDuplicates:false});
-  if(error)console.error('dbSaveNote:',error.message);
+  const r=await sb().from('notes').upsert({user_id:UID,week_number:wk,content:txt,updated_at:new Date().toISOString()},{onConflict:'user_id,week_number',ignoreDuplicates:false});
+  if(r.error)console.error('dbSaveNote:',r.error.message);
 }
+
 function renderPH(wk){
   const tot=Object.values(ST.completedDays).filter(Boolean).length;
   const wkd=Object.keys(ST.completedComplements).filter(k=>ST.completedComplements[k]).length;
   const ch=Math.min(tot,TOTAL_CHAPTERS);
   const pct=Math.round(ch/TOTAL_CHAPTERS*100);
-  const $=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  const $w=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=v+'%';};
-  $w('pfil',pct);$('ppct',pct+'%');
-  $('swk',wkd+' / '+TOTAL_WEEKS);$('sch',ch+' / '+TOTAL_CHAPTERS);$('sst',tot);
-  $w('bat',atPct(ch));$('pat',atPct(ch)+'%');
-  $w('bnt',ntPct(ch));$('pnt',ntPct(ch)+'%');
-  if(wk!==undefined&&WEEKS_DATA){
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const setW=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=v+'%';};
+  setW('pfil',pct);set('ppct',pct+'%');
+  set('swk',wkd+' / '+TOTAL_WEEKS);
+  set('sch',ch+' / '+TOTAL_CHAPTERS);
+  set('sst',tot);
+  setW('bat',atPct(ch));set('pat',atPct(ch)+'%');
+  setW('bnt',ntPct(ch));set('pnt',ntPct(ch)+'%');
+  if(wk!==undefined&&typeof WEEKS_DATA!=='undefined'){
     const wd=WEEKS_DATA[wk];
     if(wd){
       const bk=getBook(wd.chaptersStart);
       let bkCh=0;
       Object.keys(ST.completedDays).forEach(key=>{
         if(!ST.completedDays[key])return;
-        const[wn]=key.split('-').map(Number);
+        const wn=parseInt(key.split('-')[0]);
         const d2=WEEKS_DATA[wn];if(!d2)return;
         if(getBook(d2.chaptersStart)[3]===bk[3])bkCh++;
       });
       const bp=Math.min(100,Math.round(bkCh/bk[1]*100));
-      $w('bbk',bp);$('pbk',bp+'%');$('lbk',bk[0]);
-      $('bbdg',bk[0].toUpperCase());
-      $('bvt',bk[4]?'"'+bk[4]+'"':' ');$('bvr',bk[5]||'');
+      setW('bbk',bp);set('pbk',bp+'%');set('lbk',bk[0]);
+      set('bbdg',bk[0].toUpperCase());
+      set('bvt',bk[4]?'"'+bk[4]+'"':' ');
+      set('bvr',bk[5]||'');
     }
   }
 }
 
-function goWeek(n){location.href="semanas.html?week="+n;}
+function setupNav(){
+  document.querySelectorAll('[data-nav]').forEach(b=>{b.onclick=()=>window.location.href=b.dataset.nav;});
+  const lo=document.getElementById('btnLogout');if(lo)lo.onclick=doLogout;
+}
+
 function renderNotes(){
   const c=document.getElementById('nl');
   const wks=Object.keys(NT_NOTES).map(k=>parseInt(k)).filter(n=>NT_NOTES[n]&&NT_NOTES[n].trim()).sort((a,b)=>a-b);
-  if(!wks.length){c.innerHTML='<div class="npemp">Nenhuma anotação registrada ainda.<br>As anotações das semanas aparecerão aqui.</div>';return;}
+  if(!wks.length){c.innerHTML='<div class="npemp">Nenhuma anotacao registrada ainda.<br>As anotacoes das semanas aparecerao aqui.</div>';return;}
   let h='';
   wks.forEach(wn=>{
     const wi=WEEKS_INDEX[wn-1];if(!wi)return;
-    h+='<div class="ne fi">'
-      +'<div class="neh" onclick="goWeek('+wn+')">'
-      +'<div><div class="newk">Semana '+wn+' · '+wi.block+'</div><div class="ner">'+wi.range+'</div><div class="ned">'+fmtD(wi.ds)+' – '+fmtD(wi.de)+'</div></div>'
-      +'<button class="nel" onclick="event.stopPropagation();goWeek('+wn+')">Ir à semana →</button>'
-      +'</div><div class="neb">'+esc(NT_NOTES[wn])+'</div></div>';
+    h+='<div class="ne" data-week="'+wn+'">';
+    h+='<div class="neh" data-week="'+wn+'">';
+    h+='<div><div class="newk">Semana '+wn+' | '+esc(wi.block)+'</div><div class="ner">'+esc(wi.range)+'</div><div class="ned">'+fmtD(wi.ds)+' - '+fmtD(wi.de)+'</div></div>';
+    h+='<button class="nel" data-week="'+wn+'">Ir a semana &rarr;</button>';
+    h+='</div><div class="neb">'+esc(NT_NOTES[wn])+'</div></div>';
   });
   c.innerHTML=h;
+  document.querySelectorAll('.neh,.nel').forEach(el=>{
+    el.onclick=(ev)=>{ev.stopPropagation();location.href='semanas.html?week='+el.dataset.week;};
+  });
 }
 
 async function init(){
+  setupNav();
   const user=await getUser();
   if(!user){location.href='index.html';return;}
-  const {data:{session:sess}}=await sb().auth.getSession();
-  if(sess) await sb().auth.setSession({access_token:sess.access_token,refresh_token:sess.refresh_token});
   await dbLoad(user.id);
   const e=document.getElementById('uemail');if(e)e.textContent=user.email;
   renderPH();
   renderNotes();
 }
+
 init();
-</script></body></html>
+
+</script>
+</body>
+</html>
