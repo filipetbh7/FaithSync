@@ -244,4 +244,6 @@ function renderPH(wk){
 }
 
 function setupNav(){
-  document.querySelectorAll('[data-nav]').forEach(b=>{b.onclick=()=>window.location.href=b.dataset.nav;}
+  document.querySelectorAll('[data-nav]').forEach(b=>{b.onclick=()=>window.location.href=b.dataset.nav;});
+  const lo=document.getElementById('btnLogout');if(lo)lo.onclick=doLogout;
+}
