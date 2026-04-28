@@ -1,7 +1,8 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="mobile-web-app-capable" content="yes"><title>FaithSync</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="mobile-web-app-capable" content="yes"><title>FaithSync</title><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="alternate icon" href="favicon.ico"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>:root{--pd:#1a1208;--pm:#2c1f0e;--pw:#3d2b14;--ig:#c9a84c;--igb:#e8c76a;--igd:#7a6030;--ir:#8b2020;--irb:#c44040;--tp:#e8dcc8;--ts:#b8a888;--td:#7a6e5a;--bo:#5a4020;--bg:#8a6830;--ab:#4a7a9b;--at:#3a8a7a;--gg:rgba(201,168,76,0.15);}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--pd);color:var(--tp);font-family:'Palatino Linotype','Palatino','Book Antiqua',Georgia,serif;font-size:16px;line-height:1.7;min-height:100vh;background-image:radial-gradient(ellipse at 20% 20%,rgba(201,168,76,0.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(139,32,32,0.04) 0%,transparent 50%);}
+body{background:var(--pd);color:var(--tp);font-family:'Palatino Linotype','Palatino','Book Antiqua',Georgia,serif;font-size:16px;line-height:1.7;min-height:100vh;background-image:radial-gradient(ellipse at 20% 20%,rgba(201,168,76,0.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(139,32,32,0.04) 0%,transparent 50%);opacity:0;transition:opacity .25s ease;}
+body.ready{opacity:1;}
 .hdr{text-align:center;padding:2rem 2rem 1.5rem;position:relative;border-bottom:1px solid var(--bo);}
 .hdr::before{content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:60%;height:1px;background:linear-gradient(90deg,transparent,var(--ig),transparent);}
 .hdrorn{color:var(--igd);font-size:.68rem;letter-spacing:.4em;text-transform:uppercase;margin-bottom:.5rem;}
@@ -38,6 +39,8 @@ body{background:var(--pd);color:var(--tp);font-family:'Palatino Linotype','Palat
 .bbdg{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--igd);white-space:nowrap;padding-top:.2rem;flex-shrink:0;}
 .bvt{font-size:.8rem;font-style:italic;color:var(--ts);line-height:1.5;}
 .bvr{font-size:.67rem;color:var(--igd);margin-top:.1rem;}
+.spinner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;border:2px solid var(--border-ornate,#5a4020);border-top-color:var(--ink-gold,#c9a84c);border-radius:50%;animation:spin .8s linear infinite;z-index:100;}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
 .toast{position:fixed;bottom:2rem;right:2rem;background:var(--pw);border:1px solid var(--igd);color:var(--tp);font-family:inherit;font-size:.67rem;letter-spacing:.12em;padding:.7rem 1.2rem;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;z-index:999;max-width:260px;}
 .toast.show{opacity:1;transform:translateY(0);}
 footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-top:1px solid var(--bo);font-style:italic;}
@@ -77,12 +80,13 @@ footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-
 .wca{position:absolute;right:.65rem;bottom:.65rem;font-size:.7rem;color:var(--igd);opacity:0;transition:opacity .2s;}.wc:hover .wca{opacity:1;}
 @media(max-width:600px){.igrd{grid-template-columns:1fr;}}
 </style></head><body>
-<div class="lscr" id="lscr">
+<div class="spinner" id="spinner"></div>
+<div class="lscr" id="lscr" style="display:none">
   <img src="faithsync-logo.jpg" alt="FaithSync" class="llogo">
   <div class="lcard">
     <div class="lttl">Acesso Familiar</div>
-    <div class="lf"><label>E-mail</label><input type="email" id="lem" placeholder="seu@email.com" autocomplete="email"></div>
-    <div class="lf"><label>Senha</label><input type="password" id="lpw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="lf"><label for="lem">E-mail</label><input type="email" id="lem" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="lf"><label for="lpw">Senha</label><input type="password" id="lpw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="lbtn" id="lbtn" onclick="doLogin()">Entrar</button>
     <div class="lerr" id="lerr"></div>
   </div>
@@ -345,7 +349,6 @@ async function doLogin(){
   const{data:loginData,error}=await sb().auth.signInWithPassword({email,password:pass});
   if(error){err.textContent='E-mail ou senha incorretos.';btn.textContent='Entrar';btn.disabled=false;}
   else{
-    console.log('Login ok, session:', loginData.session?.access_token?.slice(0,20)+'...');
     initApp();
   }
 }
@@ -383,12 +386,23 @@ function renderIndex(){
 
 async function initApp(){
   const {data:{session},error:se}=await sb().auth.getSession();
-  console.log('initApp session:', session?.user?.email||'none', 'error:', se?.message||'none');
-  if(!session){console.log('No session, staying on login');return;}
+  const spinner=document.getElementById('spinner');
+  const lscr=document.getElementById('lscr');
+  const iscr=document.getElementById('iscr');
+  if(!session){
+    // No session — show login
+    if(spinner)spinner.style.display='none';
+    if(lscr)lscr.style.display='flex';
+    document.body.classList.add('ready');
+    return;
+  }
+  // Session found — load data and show index
   const user=session.user;
   await dbLoad(user.id);
-  document.getElementById('lscr').style.display='none';
-  document.getElementById('iscr').style.display='block';
+  if(spinner)spinner.style.display='none';
+  if(lscr)lscr.style.display='none';
+  if(iscr)iscr.style.display='block';
+  document.body.classList.add('ready');
   const e=document.getElementById('uemail');if(e)e.textContent=user.email;
   renderPH();
   renderIndex();

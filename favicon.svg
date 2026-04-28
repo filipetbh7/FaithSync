@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#1a1208"/>
+  <rect x="1" y="1" width="30" height="30" rx="5" fill="none" stroke="#7a6030" stroke-width="1"/>
+  <!-- Open book -->
+  <path d="M6 22 L16 18 L26 22 L26 12 L16 8 L6 12 Z" fill="none" stroke="#c9a84c" stroke-width="1.2" stroke-linejoin="round"/>
+  <line x1="16" y1="8" x2="16" y2="22" stroke="#c9a84c" stroke-width="1" stroke-dasharray="1,1"/>
+  <path d="M6 12 L16 8" stroke="#c9a84c" stroke-width="1.2"/>
+  <path d="M16 8 L26 12" stroke="#c9a84c" stroke-width="1.2"/>
+  <!-- Shine -->
+  <circle cx="16" cy="14" r="1.5" fill="#e8c76a" opacity="0.6"/>
+</svg>
