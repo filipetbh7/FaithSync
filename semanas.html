@@ -400,10 +400,19 @@ function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.
 
 let _supa=null;
 function supa(){
-  if(!_supa){const {createClient}=supabase;_supa=createClient(SUPABASE_URL,SUPABASE_ANON,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});}
+  if(!_supa){
+    const {createClient}=supabase;
+    _supa=createClient(SUPABASE_URL,SUPABASE_ANON,{
+      auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false,storageKey:'faithsync-auth'}
+    });
+  }
   return _supa;
 }
-async function getUser(){const {data:{session}}=await supa().auth.getSession();return session?.user||null;}
+async function getUser(){
+  const {data:{session},error}=await supa().auth.getSession();
+  if(error) console.error('getSession error:',error.message);
+  return session?.user||null;
+}
 
 let state={completedDays:{},completedComplements:{},currentWeek:32,streak:0};
 let notes={};
@@ -419,12 +428,16 @@ async function loadFromSupabase(userId){
   if(nd) nd.forEach(r=>{notes[r.week_number]=r.content;});
 }
 async function saveProgress(){
-  if(!_userId)return;
-  const {error} = await supa().from('progress').upsert(
-    {user_id:_userId,data:state,updated_at:new Date().toISOString()},
-    {onConflict:'user_id',ignoreDuplicates:false}
-  );
-  if(error) console.error('saveProgress error:',error.message);
+  if(!_userId){ console.warn('saveProgress: no _userId'); return; }
+  const {data,error} = await supa()
+    .from('progress')
+    .upsert(
+      {user_id:_userId, data:state, updated_at:new Date().toISOString()},
+      {onConflict:'user_id', ignoreDuplicates:false}
+    )
+    .select();
+  if(error) console.error('saveProgress error:', error.code, error.message, error.details, error.hint);
+  else console.log('saveProgress ok, rows:', data?.length);
 }
 async function saveNote(weekNum,content){
   if(!_userId)return;
@@ -838,18 +851,21 @@ async function doManualSave() {
   }
 
   // Save progress
-  const {error} = await supa().from('progress').upsert(
-    {user_id:_userId, data:state, updated_at:new Date().toISOString()},
-    {onConflict:'user_id', ignoreDuplicates:false}
-  );
+  const {data:sd, error} = await supa().from('progress')
+    .upsert(
+      {user_id:_userId, data:state, updated_at:new Date().toISOString()},
+      {onConflict:'user_id', ignoreDuplicates:false}
+    ).select();
+
+  console.log('Manual save result:', sd, error);
 
   if(btn) {
     btn.classList.remove('saving');
     if(error) {
-      btn.textContent = 'Erro ao salvar';
+      btn.textContent = 'Erro: '+error.message.slice(0,30);
       btn.style.background = 'var(--ink-red)';
-      setTimeout(()=>{ btn.textContent='↑ Salvar Progresso'; btn.style.background=''; },3000);
-      console.error('Save error:', error.message);
+      setTimeout(()=>{ btn.textContent='↑ Salvar Progresso'; btn.style.background=''; },5000);
+      console.error('Save error full:', JSON.stringify(error));
     } else {
       btn.classList.add('saved');
       btn.textContent = 'Salvo ✓';
@@ -862,12 +878,12 @@ async function toggleDay(key,event) {
   if(event) event.stopPropagation();
   state.completedDays[key]=!state.completedDays[key];
   renderWeek(currentWeek); // update UI immediately
-  const {error} = await supa().from('progress').upsert(
-    {user_id:_userId, data:state, updated_at:new Date().toISOString()},
-    {onConflict:'user_id', ignoreDuplicates:false}
-  );
+  const {error} = await supa().from('progress')
+    .upsert({user_id:_userId, data:state, updated_at:new Date().toISOString()},
+            {onConflict:'user_id', ignoreDuplicates:false})
+    .select();
   if(error) {
-    console.error('toggleDay save error:', error.message);
+    console.error('toggleDay save error:', JSON.stringify(error));
     showToast('⚠ Erro ao salvar — use botão Salvar');
   } else {
     showToast(state.completedDays[key]?'Leitura marcada ✓':'Marcação removida');
