@@ -687,8 +687,8 @@ function renderWk(wn){
 
   h+='<div class="abar">';
   h+='<button class="abtn sv" id="btnSv">Salvar</button>';
-  h+='<button class="abtn" id="btnExp">Exportar Backup</button>';
-  h+='<button class="abtn" id="btnImp">Importar Backup</button>';
+  h+='<button class="abtn" id="btnExp">&#8595; Backup Local</button>';
+  h+='<button class="abtn" id="btnImp">&#8593; Restaurar Backup</button>';
   h+='<input type="file" id="fImp" accept=".json" style="display:none">';
   h+='<button class="abtn danger" id="btnRst">Reiniciar Semana</button>';
   h+='</div>';
@@ -751,17 +751,25 @@ async function doSave(){
 }
 
 function doExport(){
-  const blob=new Blob([JSON.stringify({state:ST,notes:NT_NOTES},null,2)],{type:'application/json'});
+  const ts=new Date().toISOString().slice(0,16).replace('T','_').replace(':','-');
+  const payload={
+    version:1,
+    exportedAt:new Date().toISOString(),
+    state:ST,
+    notes:NT_NOTES
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download='faithsync_'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='faithsync_backup_'+ts+'.json';
   a.click();URL.revokeObjectURL(url);
-  toast('Backup exportado');
+  toast('Backup salvo: faithsync_backup_'+ts+'.json');
 }
 
 async function doImport(ev){
   const file=ev.target.files[0];
   if(!file)return;
+  if(!confirm('Restaurar backup? O progresso atual no servidor sera substituido.'))return;
   const r=new FileReader();
   r.onload=async(e)=>{
     try{
@@ -770,8 +778,13 @@ async function doImport(ev){
       if(d.notes){
         for(const k in d.notes){await dbSaveNote(parseInt(k),d.notes[k]);}
       }
-      await dbSave();renderWk(CW);toast('Importado');
-    }catch(err){toast('Erro ao importar');}
+      const ok=await dbSave();
+      if(ok){renderWk(CW);toast('Backup restaurado com sucesso');}
+      else toast('Erro ao salvar no servidor — tente novamente');
+    }catch(err){
+      console.error('doImport error:',err);
+      toast('Arquivo invalido ou corrompido');
+    }
   };
   r.readAsText(file);
 }

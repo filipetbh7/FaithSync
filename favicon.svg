@@ -1,11 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#1a1208"/>
-  <rect x="1" y="1" width="30" height="30" rx="5" fill="none" stroke="#7a6030" stroke-width="1"/>
-  <!-- Open book -->
-  <path d="M6 22 L16 18 L26 22 L26 12 L16 8 L6 12 Z" fill="none" stroke="#c9a84c" stroke-width="1.2" stroke-linejoin="round"/>
-  <line x1="16" y1="8" x2="16" y2="22" stroke="#c9a84c" stroke-width="1" stroke-dasharray="1,1"/>
-  <path d="M6 12 L16 8" stroke="#c9a84c" stroke-width="1.2"/>
-  <path d="M16 8 L26 12" stroke="#c9a84c" stroke-width="1.2"/>
-  <!-- Shine -->
-  <circle cx="16" cy="14" r="1.5" fill="#e8c76a" opacity="0.6"/>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#0d1f35"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#f5d97a" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#e8a830" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#e8a830" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="page-l" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c8b88a"/>
+      <stop offset="100%" stop-color="#f5e8c0"/>
+    </linearGradient>
+    <linearGradient id="page-r" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f5e8c0"/>
+      <stop offset="100%" stop-color="#c8b88a"/>
+    </linearGradient>
+    <linearGradient id="cover" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a4a6e"/>
+      <stop offset="100%" stop-color="#1a2e44"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="32" height="32" rx="5" fill="url(#bg)"/>
+
+  <!-- Glow rays from book spine -->
+  <rect x="0" y="0" width="32" height="18" fill="url(#glow)" opacity="0.7"/>
+
+  <!-- Light rays -->
+  <line x1="16" y1="18" x2="8"  y2="2"  stroke="#f5d97a" stroke-width="0.4" opacity="0.35"/>
+  <line x1="16" y1="18" x2="12" y2="1"  stroke="#f5d97a" stroke-width="0.5" opacity="0.45"/>
+  <line x1="16" y1="18" x2="16" y2="1"  stroke="#f5d97a" stroke-width="0.6" opacity="0.55"/>
+  <line x1="16" y1="18" x2="20" y2="1"  stroke="#f5d97a" stroke-width="0.5" opacity="0.45"/>
+  <line x1="16" y1="18" x2="24" y2="2"  stroke="#f5d97a" stroke-width="0.4" opacity="0.35"/>
+
+  <!-- Book cover bottom/shadow -->
+  <ellipse cx="16" cy="29" rx="11" ry="2" fill="#0a1825" opacity="0.6"/>
+
+  <!-- Book body -->
+  <rect x="5" y="18" width="22" height="10" rx="1" fill="url(#cover)"/>
+
+  <!-- Left page -->
+  <path d="M5 18 Q5 14 16 14 L16 28 Q5 28 5 24 Z" fill="url(#page-l)"/>
+  <!-- Right page -->
+  <path d="M27 18 Q27 14 16 14 L16 28 Q27 28 27 24 Z" fill="url(#page-r)"/>
+
+  <!-- Page lines left -->
+  <line x1="8"  y1="17.5" x2="14.5" y2="16"   stroke="#9a8860" stroke-width="0.4" opacity="0.6"/>
+  <line x1="8"  y1="19.5" x2="14.5" y2="18.5"  stroke="#9a8860" stroke-width="0.4" opacity="0.5"/>
+  <line x1="8"  y1="21.5" x2="14.5" y2="21"    stroke="#9a8860" stroke-width="0.4" opacity="0.5"/>
+  <line x1="8"  y1="23.5" x2="14.5" y2="23.5"  stroke="#9a8860" stroke-width="0.4" opacity="0.5"/>
+
+  <!-- Page lines right -->
+  <line x1="24" y1="17.5" x2="17.5" y2="16"   stroke="#9a8860" stroke-width="0.4" opacity="0.6"/>
+  <line x1="24" y1="19.5" x2="17.5" y2="18.5"  stroke="#9a8860" stroke-width="0.4" opacity="0.5"/>
+  <line x1="24" y1="21.5" x2="17.5" y2="21"    stroke="#9a8860" stroke-width="0.4" opacity="0.5"/>
+  <line x1="24" y1="23.5" x2="17.5" y2="23.5"  stroke="#9a8860" stroke-width="0.4" opacity="0.5"/>
+
+  <!-- Book spine (center)-->
+  <line x1="16" y1="14" x2="16" y2="28" stroke="#b8a070" stroke-width="0.8" opacity="0.8"/>
+
+  <!-- Bright glow at spine top -->
+  <circle cx="16" cy="14" r="2.5" fill="#f5e070" opacity="0.7"/>
+  <circle cx="16" cy="14" r="1.2" fill="#ffffff" opacity="0.9"/>
 </svg>
