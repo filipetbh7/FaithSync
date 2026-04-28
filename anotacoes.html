@@ -143,155 +143,61 @@
 const SUPABASE_URL = 'https://shhtdamjxoxxxsyeqhhi.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
 
+const SUPABASE_URL = 'https://shhtdamjxoxxxsyeqhhi.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
+
 let _supa = null;
 function supa() {
   if (!_supa) {
-    _supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false
-      }
+    _supa = supabase.createClient('https://shhtdamjxoxxxsyeqhhi.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk', {
+      auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
     });
   }
   return _supa;
 }
-
 async function getUser() {
   const { data: { session }, error } = await supa().auth.getSession();
   if (error) console.error('getSession error:', error.message);
-  console.log('Session user:', session?.user?.email || 'none');
+  console.log('getUser:', session?.user?.email || 'not logged in');
   return session?.user || null;
 }
-
 async function doLogout() {
   await supa().auth.signOut();
   window.location.href = 'index.html';
 }
-
 let state = { completedDays: {}, completedComplements: {}, currentWeek: 32 };
 let notes = {};
 let _userId = null;
-
 async function loadFromSupabase(userId) {
   _userId = userId;
-  console.log('Loading for userId:', userId);
-  
-  const { data: pd, error: pe } = await supa()
-    .from('progress')
-    .select('data')
-    .eq('user_id', userId)
-    .maybeSingle();
-  
+  console.log('loadFromSupabase for:', userId);
+  const { data: pd, error: pe } = await supa().from('progress').select('data').eq('user_id', userId).maybeSingle();
   if (pe) console.error('load progress error:', pe.message);
-  else if (pd?.data) { state = { ...state, ...pd.data }; console.log('Progress loaded ok'); }
-  else console.log('No progress row yet — will create on first save');
-
-  const { data: nd, error: ne } = await supa()
-    .from('notes')
-    .select('week_number,content')
-    .eq('user_id', userId);
-  
+  if (pd?.data) { state = { ...state, ...pd.data }; console.log('progress loaded ok'); }
+  else console.log('no existing progress row — will create on first save');
+  const { data: nd, error: ne } = await supa().from('notes').select('week_number,content').eq('user_id', userId);
   if (ne) console.error('load notes error:', ne.message);
-  else if (nd) { nd.forEach(r => { notes[r.week_number] = r.content; }); console.log('Notes loaded:', nd.length); }
+  if (nd) { nd.forEach(r => { notes[r.week_number] = r.content; }); console.log('notes loaded:', nd.length); }
 }
-
 async function saveProgress() {
-  if (!_userId) { console.warn('saveProgress: no _userId'); return false; }
-  const { error } = await supa()
-    .from('progress')
-    .upsert(
-      { user_id: _userId, data: state, updated_at: new Date().toISOString() },
-      { onConflict: 'user_id', ignoreDuplicates: false }
-    );
+  if (!_userId) { console.warn('saveProgress: no userId'); return false; }
+  const { error } = await supa().from('progress').upsert(
+    { user_id: _userId, data: state, updated_at: new Date().toISOString() },
+    { onConflict: 'user_id', ignoreDuplicates: false }
+  );
   if (error) { console.error('saveProgress error:', error.code, error.message); return false; }
   console.log('saveProgress ok');
   return true;
 }
-
 async function saveNote(weekNum, content) {
   if (!_userId) return;
   notes[weekNum] = content;
-  const { error } = await supa()
-    .from('notes')
-    .upsert(
-      { user_id: _userId, week_number: weekNum, content: content, updated_at: new Date().toISOString() },
-      { onConflict: 'user_id,week_number', ignoreDuplicates: false }
-    );
+  const { error } = await supa().from('notes').upsert(
+    { user_id: _userId, week_number: weekNum, content: content, updated_at: new Date().toISOString() },
+    { onConflict: 'user_id,week_number', ignoreDuplicates: false }
+  );
   if (error) console.error('saveNote error:', error.message);
 }
-
-function getBookAtChapter(n){for(let i=BOOKS.length-1;i>=0;i--)if(n>=BOOKS[i][3])return BOOKS[i];return BOOKS[0];}
-function getATProgress(n){return Math.min(100,Math.round(Math.max(0,n-1)/AT_CHAPTERS*100));}
-function getNTProgress(n){if(n<930)return 0;return Math.min(100,Math.round((n-930)/NT_CHAPTERS*100));}
-function formatDate(d){return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});}
-function formatDateFull(d){return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});}
-function isToday(date){const t=new Date();return date.toDateString()===t.toDateString();}
-function escapeHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
-
-let _supa=null;
-function supa(){
-  if(!_supa){const {createClient}=supabase;_supa=createClient(SUPABASE_URL,SUPABASE_ANON,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});}
-  return _supa;
-}
-async function getUser(){const {data:{session}}=await supa().auth.getSession();return session?.user||null;}
-
-let state={completedDays:{},completedComplements:{},currentWeek:32,streak:0};
-let notes={};
-let _userId=null;
-
-async function loadFromSupabase(userId){
-  _userId=userId;
-  const {data:pd,error:pe}=await supa().from('progress').select('data').eq('user_id',userId).maybeSingle();
-  if(pe) console.error('load progress error:',pe.message);
-  if(pd?.data) state={...state,...pd.data};
-  const {data:nd,error:ne}=await supa().from('notes').select('week_number,content').eq('user_id',userId);
-  if(ne) console.error('load notes error:',ne.message);
-  if(nd) nd.forEach(r=>{notes[r.week_number]=r.content;});
-}
-async function saveProgress(){
-  if(!_userId)return;
-  const {error} = await supa().from('progress').upsert(
-    {user_id:_userId,data:state,updated_at:new Date().toISOString()},
-    {onConflict:'user_id',ignoreDuplicates:false}
-  );
-  if(error) console.error('saveProgress error:',error.message);
-}
-async function saveNote(weekNum,content){
-  if(!_userId)return;
-  notes[weekNum]=content;
-  await supa().from('notes').upsert({user_id:_userId,week_number:weekNum,content:content,updated_at:new Date().toISOString()},{onConflict:'user_id,week_number'});
-}
-async function doLogout(){await supa().auth.signOut();window.location.href='index.html';}
-
-function renderProgressHeader(weekNum){
-  const totalDone=Object.values(state.completedDays).filter(Boolean).length;
-  const weeksCompleted=Object.keys(state.completedComplements).filter(k=>state.completedComplements[k]).length;
-  const chapters=Math.min(totalDone,TOTAL_CHAPTERS);
-  const pct=Math.round(chapters/TOTAL_CHAPTERS*100);
-  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  const setW=(id,v)=>{const el=document.getElementById(id);if(el)el.style.width=v+'%';};
-  setW('progress-fill',pct);set('progress-pct',pct+'%');
-  set('stat-weeks',weeksCompleted+' / '+TOTAL_WEEKS);
-  set('stat-chapters',chapters+' / '+TOTAL_CHAPTERS);
-  set('stat-streak',totalDone);
-  setW('bar-at',getATProgress(chapters));set('pct-at',getATProgress(chapters)+'%');
-  setW('bar-nt',getNTProgress(chapters));set('pct-nt',getNTProgress(chapters)+'%');
-  if(weekNum!==undefined){
-    const wData=WEEKS_DATA[weekNum];
-    if(wData){
-      const book=getBookAtChapter(wData.chaptersStart);
-      const doneDays=wData.days.filter((_,i)=>state.completedDays[`${weekNum}-${i}`]).length;
-      const bookPct=Math.min(100,Math.round(doneDays/wData.days.length*100));
-      setW('bar-book',bookPct);set('pct-book',bookPct+'%');set('label-book',book[0]);
-      set('book-badge',book[0].toUpperCase());
-      set('book-verse-text',book[4]?`"${book[4]}"`:' ');
-      set('book-verse-ref',book[5]||'');
-    }
-  }
-}
-
 
 function renderNotes() {
   const container = document.getElementById('notes-list');
