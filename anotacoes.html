@@ -327,14 +327,20 @@ let _userId=null;
 
 async function loadFromSupabase(userId){
   _userId=userId;
-  const {data:pd}=await supa().from('progress').select('data').eq('user_id',userId).maybeSingle();
+  const {data:pd,error:pe}=await supa().from('progress').select('data').eq('user_id',userId).maybeSingle();
+  if(pe) console.error('load progress error:',pe.message);
   if(pd?.data) state={...state,...pd.data};
-  const {data:nd}=await supa().from('notes').select('week_number,content').eq('user_id',userId);
+  const {data:nd,error:ne}=await supa().from('notes').select('week_number,content').eq('user_id',userId);
+  if(ne) console.error('load notes error:',ne.message);
   if(nd) nd.forEach(r=>{notes[r.week_number]=r.content;});
 }
 async function saveProgress(){
   if(!_userId)return;
-  await supa().from('progress').upsert({user_id:_userId,data:state,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  const {error} = await supa().from('progress').upsert(
+    {user_id:_userId,data:state,updated_at:new Date().toISOString()},
+    {onConflict:'user_id',ignoreDuplicates:false}
+  );
+  if(error) console.error('saveProgress error:',error.message);
 }
 async function saveNote(weekNum,content){
   if(!_userId)return;

@@ -407,14 +407,20 @@ let _userId=null;
 
 async function loadFromSupabase(userId){
   _userId=userId;
-  const {data:pd}=await supa().from('progress').select('data').eq('user_id',userId).maybeSingle();
+  const {data:pd,error:pe}=await supa().from('progress').select('data').eq('user_id',userId).maybeSingle();
+  if(pe) console.error('load progress error:',pe.message);
   if(pd?.data) state={...state,...pd.data};
-  const {data:nd}=await supa().from('notes').select('week_number,content').eq('user_id',userId);
+  const {data:nd,error:ne}=await supa().from('notes').select('week_number,content').eq('user_id',userId);
+  if(ne) console.error('load notes error:',ne.message);
   if(nd) nd.forEach(r=>{notes[r.week_number]=r.content;});
 }
 async function saveProgress(){
   if(!_userId)return;
-  await supa().from('progress').upsert({user_id:_userId,data:state,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  const {error} = await supa().from('progress').upsert(
+    {user_id:_userId,data:state,updated_at:new Date().toISOString()},
+    {onConflict:'user_id',ignoreDuplicates:false}
+  );
+  if(error) console.error('saveProgress error:',error.message);
 }
 async function saveNote(weekNum,content){
   if(!_userId)return;
@@ -439,9 +445,21 @@ function renderProgressHeader(weekNum){
   if(weekNum!==undefined){
     const wData=WEEKS_DATA[weekNum];
     if(wData){
+      // Book progress: chapters read globally within this book
       const book=getBookAtChapter(wData.chaptersStart);
-      const doneDays=wData.days.filter((_,i)=>state.completedDays[`${weekNum}-${i}`]).length;
-      const bookPct=Math.min(100,Math.round(doneDays/wData.days.length*100));
+      const bookStart=book[3];       // first chapter of this book (1-based index)
+      const bookTotal=book[1];       // total chapters in this book
+      // Count all completed days across ALL weeks whose chaptersStart falls in this book
+      let chaptersReadInBook=0;
+      Object.keys(state.completedDays).forEach(key=>{
+        if(!state.completedDays[key]) return;
+        const [wn,di]=key.split('-').map(Number);
+        const wd=WEEKS_DATA[wn];
+        if(!wd) return;
+        const b=getBookAtChapter(wd.chaptersStart);
+        if(b[3]===bookStart) chaptersReadInBook++;
+      });
+      const bookPct=Math.min(100,Math.round(chaptersReadInBook/bookTotal*100));
       setW('bar-book',bookPct);set('pct-book',bookPct+'%');set('label-book',book[0]);
       set('book-badge',book[0].toUpperCase());
       set('book-verse-text',book[4]?`"${book[4]}"`:' ');
