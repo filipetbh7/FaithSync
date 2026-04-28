@@ -663,13 +663,58 @@ function showToast(msg) {
 // ── SUPABASE CLIENT ──
 let _supa = null;
 function supa() {
-  if(!_supa) {
-    const {createClient} = supabase;
-    _supa = createClient(SUPABASE_URL, SUPABASE_ANON, {
-      auth: { autoRefreshToken:true, persistSession:true, detectSessionInUrl:false }
+  if (!_supa) {
+    _supa = supabase.createClient('https://shhtdamjxoxxxsyeqhhi.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk', {
+      auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
     });
   }
   return _supa;
+}
+
+async function getUser() {
+  const { data: { session }, error } = await supa().auth.getSession();
+  if (error) console.error('getSession error:', error.message);
+  console.log('index getUser:', session?.user?.email || 'none');
+  return session?.user || null;
+}
+
+let state = { completedDays: {}, completedComplements: {}, currentWeek: 32 };
+let notes = {};
+let _userId = null;
+
+async function loadFromSupabase(userId) {
+  _userId = userId;
+  console.log('index loadFromSupabase for:', userId);
+  const { data: pd, error: pe } = await supa().from('progress').select('data').eq('user_id', userId).maybeSingle();
+  if (pe) console.error('load progress error:', pe.message);
+  if (pd?.data) state = { ...state, ...pd.data };
+  const { data: nd, error: ne } = await supa().from('notes').select('week_number,content').eq('user_id', userId);
+  if (ne) console.error('load notes error:', ne.message);
+  if (nd) nd.forEach(r => { notes[r.week_number] = r.content; });
+}
+
+async function saveProgress() {
+  if (!_userId) return;
+  const { error } = await supa().from('progress').upsert(
+    { user_id: _userId, data: state, updated_at: new Date().toISOString() },
+    { onConflict: 'user_id', ignoreDuplicates: false }
+  );
+  if (error) console.error('saveProgress error:', error.message);
+}
+
+async function saveNote(weekNum, content) {
+  if (!_userId) return;
+  notes[weekNum] = content;
+  await supa().from('notes').upsert(
+    { user_id: _userId, week_number: weekNum, content: content, updated_at: new Date().toISOString() },
+    { onConflict: 'user_id,week_number' }
+  );
+}
+
+async function doLogout() {
+  await supa().auth.signOut();
+  document.getElementById('index-view').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
 }
 
 // ── AUTH ──
