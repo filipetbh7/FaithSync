@@ -1,261 +1,108 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-<meta name="mobile-web-app-capable" content="yes">
-<title>FaithSync · Plano de Leitura Bíblica</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-
-  :root {
-    --parchment-dark:#1a1208; --parchment-mid:#2c1f0e; --parchment-warm:#3d2b14;
-    --ink-gold:#c9a84c; --ink-gold-bright:#e8c76a; --ink-gold-dim:#7a6030;
-    --ink-red:#8b2020; --ink-red-bright:#c44040;
-    --text-primary:#e8dcc8; --text-secondary:#b8a888; --text-dim:#7a6e5a;
-    --border-ornate:#5a4020; --border-gold:#8a6830;
-    --accent-blue:#4a7a9b; --accent-teal:#3a8a7a;
-    --glow-gold:rgba(201,168,76,0.15);
-    --status-none:#3a3020; --status-done:#3a6a3a;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    background-color:var(--parchment-dark); color:var(--text-primary);
-    font-family:'Palatino Linotype','Palatino','Book Antiqua',Georgia,serif;
-    font-size:16px; line-height:1.7; min-height:100vh;
-    background-image:
-      radial-gradient(ellipse at 20% 20%,rgba(201,168,76,0.04) 0%,transparent 50%),
-      radial-gradient(ellipse at 80% 80%,rgba(139,32,32,0.04) 0%,transparent 50%);
-  }
-  .site-header { text-align:center; padding:2.2rem 2rem 1.6rem; position:relative; border-bottom:1px solid var(--border-ornate); }
-  .site-header::before { content:''; position:absolute; bottom:-1px; left:50%; transform:translateX(-50%); width:60%; height:1px; background:linear-gradient(90deg,transparent,var(--ink-gold),transparent); }
-  .header-ornament { color:var(--ink-gold-dim); font-size:0.68rem; letter-spacing:0.4em; text-transform:uppercase; margin-bottom:0.5rem; }
-  .site-title { font-size:clamp(1.3rem,4vw,2.1rem); color:var(--ink-gold-bright); font-weight:700; line-height:1.2; text-shadow:0 0 40px rgba(201,168,76,0.3); letter-spacing:0.05em; }
-  .site-subtitle { font-size:0.77rem; color:var(--text-dim); letter-spacing:0.22em; margin-top:0.4rem; }
-  .top-nav { display:flex; align-items:center; justify-content:center; gap:0.8rem; padding:0.55rem 2rem; border-bottom:1px solid var(--border-ornate); background:rgba(0,0,0,0.15); flex-wrap:wrap; }
-  .tnav-btn { background:none; border:1px solid var(--border-ornate); color:var(--ink-gold-dim); font-family:inherit; font-size:0.65rem; letter-spacing:0.18em; cursor:pointer; padding:0.32rem 0.9rem; text-transform:uppercase; transition:all 0.2s; }
-  .tnav-btn:hover { border-color:var(--ink-gold); color:var(--ink-gold); background:var(--glow-gold); }
-  .tnav-btn.active { border-color:var(--ink-gold); color:var(--ink-gold); background:var(--glow-gold); }
-  .tnav-sep { color:var(--border-ornate); font-size:0.8rem; }
-  .user-info { font-size:0.62rem; color:var(--text-dim); letter-spacing:0.1em; }
-  .logout-btn { background:none; border:none; color:var(--text-dim); font-family:inherit; font-size:0.62rem; cursor:pointer; letter-spacing:0.1em; padding:0; transition:color 0.2s; }
-  .logout-btn:hover { color:var(--ink-red-bright); }
-  /* Progress */
-  .progress-section { max-width:900px; margin:1.6rem auto 0; padding:0 2rem; }
-  .progress-label { display:flex; justify-content:space-between; font-size:0.68rem; letter-spacing:0.15em; color:var(--text-dim); margin-bottom:0.4rem; }
-  .progress-track { height:5px; background:var(--parchment-warm); border-radius:3px; overflow:hidden; border:1px solid var(--border-ornate); }
-  .progress-fill { height:100%; background:linear-gradient(90deg,var(--ink-gold-dim),var(--ink-gold-bright)); border-radius:3px; transition:width 0.8s ease; box-shadow:0 0 8px rgba(201,168,76,0.4); }
-  .progress-stats { display:flex; gap:2rem; margin-top:0.9rem; flex-wrap:wrap; }
-  .stat-item { display:flex; flex-direction:column; gap:0.1rem; }
-  .stat-value { font-size:1.2rem; color:var(--ink-gold); font-weight:700; }
-  .stat-label { font-size:0.68rem; color:var(--text-dim); letter-spacing:0.08em; }
-  .stats-divider { height:1px; background:linear-gradient(90deg,transparent,var(--border-ornate),transparent); margin:0.9rem 0; }
-  .progress-stats-2 { display:flex; gap:0; flex-wrap:wrap; }
-  .stat-item-2 { flex:1; min-width:110px; padding:0.45rem 0.8rem; border-left:1px solid var(--border-ornate); }
-  .stat-item-2:first-child { border-left:none; padding-left:0; }
-  .stat-bar-wrap { display:flex; align-items:center; gap:0.5rem; margin-top:0.12rem; }
-  .stat-bar-mini { flex:1; height:3px; background:var(--parchment-warm); border-radius:2px; overflow:hidden; }
-  .stat-bar-mini-fill { height:100%; border-radius:2px; transition:width 0.8s ease; }
-  .fill-gold { background:linear-gradient(90deg,var(--ink-gold-dim),var(--ink-gold)); }
-  .fill-blue { background:linear-gradient(90deg,#3a5a7a,var(--accent-blue)); }
-  .fill-teal { background:linear-gradient(90deg,#2a6a5a,var(--accent-teal)); }
-  .stat-label-2 { font-size:0.59rem; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
-  .stat-pct { font-size:0.68rem; color:var(--text-secondary); white-space:nowrap; }
-  .book-verse-banner { margin:0.9rem 0 0; padding:0.75rem 1.1rem; border:1px solid var(--border-ornate); border-left:3px solid var(--ink-gold-dim); background:rgba(0,0,0,0.15); display:flex; align-items:flex-start; gap:0.9rem; }
-  .book-badge { font-size:0.57rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-gold-dim); white-space:nowrap; padding-top:0.2rem; flex-shrink:0; }
-  .book-verse-text { font-size:0.82rem; font-style:italic; color:var(--text-secondary); line-height:1.5; }
-  .book-verse-ref { font-size:0.68rem; color:var(--ink-gold-dim); margin-top:0.12rem; }
-  /* Toast */
-  .toast { position:fixed; bottom:2rem; right:2rem; background:var(--parchment-warm); border:1px solid var(--ink-gold-dim); color:var(--text-primary); font-family:inherit; font-size:0.68rem; letter-spacing:0.12em; padding:0.7rem 1.2rem; opacity:0; transform:translateY(10px); transition:all 0.3s; pointer-events:none; z-index:999; max-width:260px; }
-  .toast.show { opacity:1; transform:translateY(0); }
-  footer { text-align:center; padding:2rem; font-size:0.68rem; color:var(--text-dim); border-top:1px solid var(--border-ornate); font-style:italic; }
-  @keyframes fadeInUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-  .fade-in { animation:fadeInUp 0.35s ease both; }
-  @media(max-width:600px) { .progress-stats{gap:1rem;} .top-nav{gap:0.5rem;} }
-
-
-  /* ── LOGIN SCREEN ── */
-  .login-screen {
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    min-height:100vh; padding:2rem;
-  }
-  .login-logo {
-    width:min(280px,80vw); border-radius:16px;
-    box-shadow:0 8px 40px rgba(0,0,0,0.5);
-    margin-bottom:2rem;
-  }
-  .login-card {
-    width:min(380px,100%);
-    background:var(--parchment-mid);
-    border:1px solid var(--border-gold);
-    padding:2rem;
-    position:relative;
-  }
-  .login-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:2px;
-    background:linear-gradient(90deg,transparent,var(--ink-gold),transparent);
-  }
-  .login-title {
-    font-size:0.75rem; letter-spacing:0.3em; color:var(--ink-gold-dim);
-    text-transform:uppercase; text-align:center; margin-bottom:1.5rem;
-  }
-  .login-field { margin-bottom:1rem; }
-  .login-field label { display:block; font-size:0.68rem; letter-spacing:0.15em; color:var(--text-dim); text-transform:uppercase; margin-bottom:0.35rem; }
-  .login-field input {
-    width:100%; background:rgba(0,0,0,0.3); border:1px solid var(--border-ornate);
-    color:var(--text-primary); font-family:inherit; font-size:0.95rem;
-    padding:0.6rem 0.9rem; outline:none; transition:border-color 0.2s;
-  }
-  .login-field input:focus { border-color:var(--border-gold); }
-  .login-btn {
-    width:100%; background:var(--ink-gold-dim); border:none; color:var(--parchment-dark);
-    font-family:inherit; font-size:0.75rem; letter-spacing:0.25em; text-transform:uppercase;
-    padding:0.8rem; cursor:pointer; margin-top:0.5rem; transition:background 0.2s; font-weight:700;
-  }
-  .login-btn:hover { background:var(--ink-gold); }
-  .login-error { font-size:0.8rem; color:var(--ink-red-bright); margin-top:0.8rem; text-align:center; min-height:1.2rem; }
-
-  /* ── INDEX VIEW ── */
-  .index-view { display:none; }
-  .index-intro {
-    max-width:900px; margin:1.3rem auto 0; padding:0 2rem;
-    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.8rem;
-  }
-  .index-intro-text { font-size:0.8rem; color:var(--text-dim); font-style:italic; }
-  .legend { display:flex; gap:1rem; flex-wrap:wrap; }
-  .legend-item { display:flex; align-items:center; gap:0.35rem; font-size:0.65rem; color:var(--text-dim); }
-  .legend-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-  .legend-dot.none { background:var(--status-none); border:1px solid #5a5030; }
-  .legend-dot.progress { background:var(--ink-gold-dim); }
-  .legend-dot.done { background:#4a8a4a; }
-  .index-block-label {
-    max-width:900px; margin:1.4rem auto 0.35rem; padding:0 2rem;
-    font-size:0.6rem; letter-spacing:0.3em; color:var(--ink-gold-dim); text-transform:uppercase;
-    display:flex; align-items:center; gap:0.8rem;
-  }
-  .index-block-label::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border-ornate),transparent); }
-  .index-grid {
-    max-width:900px; margin:0 auto; padding:0 2rem;
-    display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:0.65rem;
-    margin-bottom:0.5rem;
-  }
-  .week-card {
-    background:var(--parchment-mid); border:1px solid var(--border-ornate);
-    padding:0.9rem 1rem; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden;
-  }
-  .week-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--ink-gold-dim),transparent); opacity:0; transition:opacity 0.2s; }
-  .week-card:hover { border-color:var(--border-gold); transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,0.3); }
-  .week-card:hover::after { opacity:1; }
-  .week-card.has-content { border-color:var(--border-gold); }
-  .week-card.status-done { border-color:#3a6a3a; }
-  .week-card.status-done::after { background:linear-gradient(90deg,transparent,#4a8a4a,transparent); opacity:1; }
-  .week-card.status-progress { border-color:var(--ink-gold-dim); }
-  .week-card.status-progress::after { opacity:1; }
-  .wc-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.35rem; }
-  .wc-num { font-size:0.6rem; letter-spacing:0.2em; color:var(--text-dim); text-transform:uppercase; }
-  .wc-status { display:flex; align-items:center; gap:0.3rem; }
-  .status-dot { width:7px; height:7px; border-radius:50%; }
-  .status-dot.none { background:var(--status-none); border:1px solid #5a5030; }
-  .status-dot.progress { background:var(--ink-gold-dim); box-shadow:0 0 4px rgba(201,168,76,0.4); }
-  .status-dot.done { background:#4a8a4a; box-shadow:0 0 4px rgba(74,138,74,0.4); }
-  .status-label { font-size:0.56rem; color:var(--text-dim); letter-spacing:0.08em; }
-  .wc-dates { font-size:0.72rem; color:var(--text-secondary); font-style:italic; margin-bottom:0.25rem; }
-  .wc-range { font-size:0.82rem; color:var(--text-primary); line-height:1.3; font-weight:500; }
-  .wc-block { font-size:0.62rem; color:var(--ink-gold-dim); letter-spacing:0.08em; margin-top:0.35rem; }
-  .wc-arrow { position:absolute; right:0.7rem; bottom:0.7rem; font-size:0.72rem; color:var(--ink-gold-dim); opacity:0; transition:opacity 0.2s; }
-  .week-card:hover .wc-arrow { opacity:1; }
-  @media(max-width:600px) { .index-grid{grid-template-columns:1fr;} }
-</style>
-</head>
-<body>
-
-<!-- LOGIN SCREEN -->
-<div class="login-screen" id="login-screen">
-  <img src="faithsync-logo.jpg" alt="FaithSync" class="login-logo">
-  <div class="login-card">
-    <div class="login-title">Acesso Familiar</div>
-    <div class="login-field">
-      <label>E-mail</label>
-      <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
-    </div>
-    <div class="login-field">
-      <label>Senha</label>
-      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
-        onkeydown="if(event.key==='Enter') doLogin()">
-    </div>
-    <button class="login-btn" onclick="doLogin()">Entrar</button>
-    <div class="login-error" id="login-error"></div>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="mobile-web-app-capable" content="yes"><title>FaithSync</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>:root{--pd:#1a1208;--pm:#2c1f0e;--pw:#3d2b14;--ig:#c9a84c;--igb:#e8c76a;--igd:#7a6030;--ir:#8b2020;--irb:#c44040;--tp:#e8dcc8;--ts:#b8a888;--td:#7a6e5a;--bo:#5a4020;--bg:#8a6830;--ab:#4a7a9b;--at:#3a8a7a;--gg:rgba(201,168,76,0.15);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--pd);color:var(--tp);font-family:'Palatino Linotype','Palatino','Book Antiqua',Georgia,serif;font-size:16px;line-height:1.7;min-height:100vh;background-image:radial-gradient(ellipse at 20% 20%,rgba(201,168,76,0.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(139,32,32,0.04) 0%,transparent 50%);}
+.hdr{text-align:center;padding:2rem 2rem 1.5rem;position:relative;border-bottom:1px solid var(--bo);}
+.hdr::before{content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:60%;height:1px;background:linear-gradient(90deg,transparent,var(--ig),transparent);}
+.hdrorn{color:var(--igd);font-size:.68rem;letter-spacing:.4em;text-transform:uppercase;margin-bottom:.5rem;}
+.hdrttl{font-size:clamp(1.3rem,4vw,2.1rem);color:var(--igb);font-weight:700;line-height:1.2;text-shadow:0 0 40px rgba(201,168,76,0.3);letter-spacing:.05em;}
+.hdrsub{font-size:.77rem;color:var(--td);letter-spacing:.22em;margin-top:.3rem;}
+.tnav{display:flex;align-items:center;justify-content:center;gap:.7rem;padding:.5rem 2rem;border-bottom:1px solid var(--bo);background:rgba(0,0,0,.15);flex-wrap:wrap;}
+.tbtn{background:none;border:1px solid var(--bo);color:var(--igd);font-family:inherit;font-size:.63rem;letter-spacing:.18em;cursor:pointer;padding:.3rem .85rem;text-transform:uppercase;transition:all .2s;}
+.tbtn:hover,.tbtn.act{border-color:var(--ig);color:var(--ig);background:var(--gg);}
+.tsep{color:var(--bo);font-size:.8rem;}
+.uinf{font-size:.6rem;color:var(--td);letter-spacing:.08em;}
+.lout{background:none;border:none;color:var(--td);font-family:inherit;font-size:.6rem;cursor:pointer;transition:color .2s;}
+.lout:hover{color:var(--irb);}
+.psec{max-width:900px;margin:1.5rem auto 0;padding:0 2rem;}
+.plbl{display:flex;justify-content:space-between;font-size:.67rem;letter-spacing:.15em;color:var(--td);margin-bottom:.4rem;}
+.ptrk{height:5px;background:var(--pw);border-radius:3px;overflow:hidden;border:1px solid var(--bo);}
+.pfil{height:100%;background:linear-gradient(90deg,var(--igd),var(--igb));border-radius:3px;transition:width .8s ease;box-shadow:0 0 8px rgba(201,168,76,.4);}
+.psts{display:flex;gap:1.8rem;margin-top:.9rem;flex-wrap:wrap;}
+.si{display:flex;flex-direction:column;gap:.1rem;}
+.sv{font-size:1.2rem;color:var(--ig);font-weight:700;}
+.sl{font-size:.67rem;color:var(--td);letter-spacing:.08em;}
+.sdiv{height:1px;background:linear-gradient(90deg,transparent,var(--bo),transparent);margin:.85rem 0;}
+.psts2{display:flex;gap:0;flex-wrap:wrap;}
+.si2{flex:1;min-width:110px;padding:.42rem .75rem;border-left:1px solid var(--bo);}
+.si2:first-child{border-left:none;padding-left:0;}
+.sbw{display:flex;align-items:center;gap:.45rem;margin-top:.1rem;}
+.sbm{flex:1;height:3px;background:var(--pw);border-radius:2px;overflow:hidden;}
+.sbf{height:100%;border-radius:2px;transition:width .8s ease;}
+.fg{background:linear-gradient(90deg,var(--igd),var(--ig));}
+.fb{background:linear-gradient(90deg,#3a5a7a,var(--ab));}
+.ft{background:linear-gradient(90deg,#2a6a5a,var(--at));}
+.sl2{font-size:.58rem;color:var(--td);letter-spacing:.1em;text-transform:uppercase;}
+.spct{font-size:.67rem;color:var(--ts);white-space:nowrap;}
+.bvb{margin:.85rem 0 0;padding:.72rem 1rem;border:1px solid var(--bo);border-left:3px solid var(--igd);background:rgba(0,0,0,.15);display:flex;align-items:flex-start;gap:.85rem;}
+.bbdg{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--igd);white-space:nowrap;padding-top:.2rem;flex-shrink:0;}
+.bvt{font-size:.8rem;font-style:italic;color:var(--ts);line-height:1.5;}
+.bvr{font-size:.67rem;color:var(--igd);margin-top:.1rem;}
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--pw);border:1px solid var(--igd);color:var(--tp);font-family:inherit;font-size:.67rem;letter-spacing:.12em;padding:.7rem 1.2rem;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;z-index:999;max-width:260px;}
+.toast.show{opacity:1;transform:translateY(0);}
+footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-top:1px solid var(--bo);font-style:italic;}
+@keyframes fi{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi .35s ease both;}
+@media(max-width:600px){.psts{gap:1rem;}.tnav{gap:.4rem;}}
+.lscr{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
+.llogo{width:min(260px,78vw);border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.5);margin-bottom:1.8rem;}
+.lcard{width:min(360px,100%);background:var(--pm);border:1px solid var(--bg);padding:1.8rem;position:relative;}
+.lcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--ig),transparent);}
+.lttl{font-size:.72rem;letter-spacing:.3em;color:var(--igd);text-transform:uppercase;text-align:center;margin-bottom:1.3rem;}
+.lf{margin-bottom:.9rem;}.lf label{display:block;font-size:.65rem;letter-spacing:.15em;color:var(--td);text-transform:uppercase;margin-bottom:.3rem;}
+.lf input{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--bo);color:var(--tp);font-family:inherit;font-size:.93rem;padding:.55rem .85rem;outline:none;transition:border-color .2s;}
+.lf input:focus{border-color:var(--bg);}
+.lbtn{width:100%;background:var(--igd);border:none;color:var(--pd);font-family:inherit;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;padding:.75rem;cursor:pointer;margin-top:.4rem;transition:background .2s;font-weight:700;}
+.lbtn:hover{background:var(--ig);}.lerr{font-size:.78rem;color:var(--irb);margin-top:.7rem;text-align:center;min-height:1.1rem;}
+.iscr{display:none;}
+.iintro{max-width:900px;margin:1.2rem auto 0;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.7rem;}
+.iitxt{font-size:.78rem;color:var(--td);font-style:italic;}
+.leg{display:flex;gap:.9rem;flex-wrap:wrap;}.li{display:flex;align-items:center;gap:.32rem;font-size:.63rem;color:var(--td);}
+.ld{width:7px;height:7px;border-radius:50%;flex-shrink:0;}.ld.none{background:#3a3020;border:1px solid #5a5030;}.ld.prog{background:var(--igd);}.ld.done{background:#4a8a4a;}
+.ibl{max-width:900px;margin:1.3rem auto .3rem;padding:0 2rem;font-size:.59rem;letter-spacing:.3em;color:var(--igd);text-transform:uppercase;display:flex;align-items:center;gap:.7rem;}
+.ibl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--bo),transparent);}
+.igrd{max-width:900px;margin:0 auto;padding:0 2rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.6rem;margin-bottom:.4rem;}
+.wc{background:var(--pm);border:1px solid var(--bo);padding:.85rem .95rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.wc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--igd),transparent);opacity:0;transition:opacity .2s;}
+.wc:hover{border-color:var(--bg);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.3);}.wc:hover::after{opacity:1;}
+.wc.hc{border-color:var(--bg);}.wc.sd{border-color:#3a6a3a;}.wc.sd::after{background:linear-gradient(90deg,transparent,#4a8a4a,transparent);opacity:1;}.wc.sp{border-color:var(--igd);}.wc.sp::after{opacity:1;}
+.wch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;}
+.wcn{font-size:.59rem;letter-spacing:.2em;color:var(--td);text-transform:uppercase;}
+.wcs{display:flex;align-items:center;gap:.28rem;}.sdt{width:6px;height:6px;border-radius:50%;}
+.sdt.none{background:#3a3020;border:1px solid #5a5030;}.sdt.prog{background:var(--igd);}.sdt.done{background:#4a8a4a;}
+.sdlbl{font-size:.54rem;color:var(--td);letter-spacing:.08em;}
+.wcd{font-size:.7rem;color:var(--ts);font-style:italic;margin-bottom:.22rem;}
+.wcr{font-size:.8rem;color:var(--tp);line-height:1.3;font-weight:500;}
+.wcb{font-size:.6rem;color:var(--igd);letter-spacing:.08em;margin-top:.32rem;}
+.wca{position:absolute;right:.65rem;bottom:.65rem;font-size:.7rem;color:var(--igd);opacity:0;transition:opacity .2s;}.wc:hover .wca{opacity:1;}
+@media(max-width:600px){.igrd{grid-template-columns:1fr;}}
+</style></head><body>
+<div class="lscr" id="lscr">
+  <img src="faithsync-logo.jpg" alt="FaithSync" class="llogo">
+  <div class="lcard">
+    <div class="lttl">Acesso Familiar</div>
+    <div class="lf"><label>E-mail</label><input type="email" id="lem" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="lf"><label>Senha</label><input type="password" id="lpw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="lbtn" id="lbtn" onclick="doLogin()">Entrar</button>
+    <div class="lerr" id="lerr"></div>
   </div>
 </div>
-
-<!-- INDEX VIEW -->
-<div class="index-view" id="index-view">
-  
-<header class="site-header">
-  <div class="header-ornament">✦ FaithSync ✦</div>
-  <h1 class="site-title">Plano de Leitura Bíblica</h1>
-  <p class="site-subtitle">Estudo em Família · Gênesis ao Apocalipse</p>
-</header>
-<div class="top-nav">
-  <button class="tnav-btn active" onclick="window.location.href='index.html'">≡ Índice</button> <span class="tnav-sep">·</span> <button class="tnav-btn" onclick="window.location.href='semanas.html'">📖 Semanas</button> <span class="tnav-sep">·</span> <button class="tnav-btn" onclick="window.location.href='anotacoes.html'">✎ Anotações</button>
-  <span class="tnav-sep">·</span>
-  <span class="user-info" id="user-email"></span>
-  <button class="logout-btn" onclick="doLogout()">sair</button>
-</div>
-  
-<div class="progress-section">
-  <div class="progress-label"><span>Progresso Geral</span><span id="progress-pct">0%</span></div>
-  <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-  <div class="progress-stats">
-    <div class="stat-item"><span class="stat-value" id="stat-weeks">0 / 87</span><span class="stat-label">Semanas concluídas</span></div>
-    <div class="stat-item"><span class="stat-value" id="stat-chapters">0 / 1189</span><span class="stat-label">Capítulos lidos</span></div>
-    <div class="stat-item"><span class="stat-value" id="stat-streak">0</span><span class="stat-label">Dias seguidos</span></div>
+<div class="iscr" id="iscr">
+  <header class="hdr"><div class="hdrorn">✦ FaithSync ✦</div><h1 class="hdrttl">Plano de Leitura Bíblica</h1><p class="hdrsub">Estudo em Família · Gênesis ao Apocalipse</p></header><div class="tnav"><button class="tbtn act" onclick="location.href='index.html'">≡ Índice</button><span class="tsep">·</span><button class="tbtn" onclick="location.href='semanas.html'">📖 Semanas</button><span class="tsep">·</span><button class="tbtn" onclick="location.href='anotacoes.html'">✎ Anotações</button><span class="tsep">·</span><span class="uinf" id="uemail"></span><button class="lout" onclick="doLogout()">sair</button></div>
+  <div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil" style="width:0%"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas concluídas</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Capítulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Velho Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" style="width:0%"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 capítulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" style="width:0%"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 capítulos</div></div></div></div>
+  <div class="iintro">
+    <div class="iitxt">87 semanas · Dom a Sex leitura · Sáb complementação</div>
+    <div class="leg"><div class="li"><div class="ld none"></div>Não iniciado</div><div class="li"><div class="ld prog"></div>Em andamento</div><div class="li"><div class="ld done"></div>Concluído</div></div>
   </div>
-  <div class="stats-divider"></div>
-  <div class="progress-stats-2">
-    
-    <div class="stat-item-2">
-      <div class="stat-label-2">Velho Testamento</div>
-      <div class="stat-bar-wrap">
-        <div class="stat-bar-mini"><div class="stat-bar-mini-fill fill-blue" id="bar-at" style="width:0%"></div></div>
-        <span class="stat-pct" id="pct-at">0%</span>
-      </div>
-      <div style="font-size:.68rem;color:var(--text-dim);margin-top:.12rem">929 capítulos</div>
-    </div>
-    <div class="stat-item-2">
-      <div class="stat-label-2">Novo Testamento</div>
-      <div class="stat-bar-wrap">
-        <div class="stat-bar-mini"><div class="stat-bar-mini-fill fill-teal" id="bar-nt" style="width:0%"></div></div>
-        <span class="stat-pct" id="pct-nt">0%</span>
-      </div>
-      <div style="font-size:.68rem;color:var(--text-dim);margin-top:.12rem">260 capítulos</div>
-    </div>
-  </div>
-  
-</div>
-  <div class="index-intro">
-    <div class="index-intro-text">87 semanas · Domingo a Sexta leitura · Sábado complementação</div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot none"></div>Não iniciado</div>
-      <div class="legend-item"><div class="legend-dot progress"></div>Em andamento</div>
-      <div class="legend-item"><div class="legend-dot done"></div>Concluído</div>
-    </div>
-  </div>
-  <div id="index-grid-container"></div>
+  <div id="igc"></div>
   <footer>FaithSync · Sincronizando a fé em família</footer>
 </div>
-
 <div class="toast" id="toast"></div>
-
 <script>
 
-const SUPABASE_URL = 'https://shhtdamjxoxxxsyeqhhi.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
-const TOTAL_CHAPTERS = 1189;
-const AT_CHAPTERS = 929;
-const NT_CHAPTERS = 260;
-const TOTAL_WEEKS = 87;
-
+const SUPABASE_URL='https://shhtdamjxoxxxsyeqhhi.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
+const TOTAL_CHAPTERS=1189,AT_CHAPTERS=929,NT_CHAPTERS=260,TOTAL_WEEKS=87;
 const BOOKS = [
   ["Gênesis",50,"AT",1,"No princípio, criou Deus os céus e a terra.","Gênesis 1:1"],
   ["Êxodo",40,"AT",51,"Eu sou o que sou.","Êxodo 3:14"],
@@ -413,7 +260,81 @@ const WEEKS_INDEX = [
   { num:86, ds:new Date(2027,11,13), de:new Date(2027,11,19), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
   { num:87, ds:new Date(2027,11,20), de:new Date(2027,11,26), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" }
 ];
-
+function getBook(n){for(let i=BOOKS.length-1;i>=0;i--)if(n>=BOOKS[i][3])return BOOKS[i];return BOOKS[0];}
+function atPct(n){return Math.min(100,Math.round(Math.max(0,n-1)/AT_CHAPTERS*100));}
+function ntPct(n){if(n<930)return 0;return Math.min(100,Math.round((n-930)/NT_CHAPTERS*100));}
+function fmtD(d){return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});}
+function fmtDFull(d){return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});}
+function isToday(d){return d.toDateString()===new Date().toDateString();}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+let _sb=null;
+function sb(){
+  if(!_sb)_sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
+  return _sb;
+}
+async function getUser(){
+  const{data:{session},error}=await sb().auth.getSession();
+  if(error)console.error('getSession:',error.message);
+  console.log('user:',session?.user?.email||'none');
+  return session?.user||null;
+}
+async function doLogout(){await sb().auth.signOut();window.location.href='index.html';}
+let ST={completedDays:{},completedComplements:{},currentWeek:32};
+let NT_NOTES={};
+let UID=null;
+async function dbLoad(uid){
+  UID=uid;
+  console.log('dbLoad for:',uid);
+  const{data:pd,error:pe}=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
+  if(pe)console.error('load progress:',pe.message);
+  if(pd?.data){ST={...ST,...pd.data};console.log('progress ok');}
+  else console.log('no progress yet');
+  const{data:nd,error:ne}=await sb().from('notes').select('week_number,content').eq('user_id',uid);
+  if(ne)console.error('load notes:',ne.message);
+  if(nd){nd.forEach(r=>NT_NOTES[r.week_number]=r.content);console.log('notes:',nd.length);}
+}
+async function dbSave(){
+  if(!UID){console.warn('dbSave: no UID');return false;}
+  const{error}=await sb().from('progress').upsert({user_id:UID,data:ST,updated_at:new Date().toISOString()},{onConflict:'user_id',ignoreDuplicates:false});
+  if(error){console.error('dbSave:',error.code,error.message);return false;}
+  console.log('dbSave ok');return true;
+}
+async function dbSaveNote(wk,txt){
+  if(!UID)return;
+  NT_NOTES[wk]=txt;
+  const{error}=await sb().from('notes').upsert({user_id:UID,week_number:wk,content:txt,updated_at:new Date().toISOString()},{onConflict:'user_id,week_number',ignoreDuplicates:false});
+  if(error)console.error('dbSaveNote:',error.message);
+}
+function renderPH(wk){
+  const tot=Object.values(ST.completedDays).filter(Boolean).length;
+  const wkd=Object.keys(ST.completedComplements).filter(k=>ST.completedComplements[k]).length;
+  const ch=Math.min(tot,TOTAL_CHAPTERS);
+  const pct=Math.round(ch/TOTAL_CHAPTERS*100);
+  const $=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const $w=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=v+'%';};
+  $w('pfil',pct);$('ppct',pct+'%');
+  $('swk',wkd+' / '+TOTAL_WEEKS);$('sch',ch+' / '+TOTAL_CHAPTERS);$('sst',tot);
+  $w('bat',atPct(ch));$('pat',atPct(ch)+'%');
+  $w('bnt',ntPct(ch));$('pnt',ntPct(ch)+'%');
+  if(wk!==undefined&&WEEKS_DATA){
+    const wd=WEEKS_DATA[wk];
+    if(wd){
+      const bk=getBook(wd.chaptersStart);
+      let bkCh=0;
+      Object.keys(ST.completedDays).forEach(key=>{
+        if(!ST.completedDays[key])return;
+        const[wn]=key.split('-').map(Number);
+        const d2=WEEKS_DATA[wn];if(!d2)return;
+        if(getBook(d2.chaptersStart)[3]===bk[3])bkCh++;
+      });
+      const bp=Math.min(100,Math.round(bkCh/bk[1]*100));
+      $w('bbk',bp);$('pbk',bp+'%');$('lbk',bk[0]);
+      $('bbdg',bk[0].toUpperCase());
+      $('bvt',bk[4]?'"'+bk[4]+'"':' ');$('bvr',bk[5]||'');
+    }
+  }
+}
 const WEEKS_DATA = {
   32: {
     number: 32,
@@ -567,239 +488,56 @@ const WEEKS_DATA = {
   }
 };
 
-function generateDanielTimeline() {
-return `
-  <svg viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;">
-    <defs>
-      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#1a1208"/>
-        <stop offset="50%" stop-color="#2c1f0e"/>
-        <stop offset="100%" stop-color="#1a1208"/>
-      </linearGradient>
-      <linearGradient id="line-grad" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#3d2b14"/>
-        <stop offset="20%" stop-color="#c9a84c"/>
-        <stop offset="80%" stop-color="#c9a84c"/>
-        <stop offset="100%" stop-color="#3d2b14"/>
-      </linearGradient>
-    </defs>
-    <rect width="800" height="280" fill="url(#bg)"/>
-
-    <!-- Title -->
-    <text x="400" y="28" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="11" fill="#7a6030" letter-spacing="3">AS QUATRO BESTAS · DANIEL 7 · OS QUATRO IMPÉRIOS</text>
-
-    <!-- Timeline line -->
-    <line x1="60" y1="130" x2="740" y2="130" stroke="url(#line-grad)" stroke-width="1.5"/>
-
-    <!-- Kingdom 1: Babylon -->
-    <circle cx="130" cy="130" r="8" fill="#c9a84c" opacity="0.9"/>
-    <line x1="130" y1="122" x2="130" y2="75" stroke="#c9a84c" stroke-width="1" opacity="0.6"/>
-    <text x="130" y="68" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="9.5" fill="#c9a84c" letter-spacing="1">BABILÔNIA</text>
-    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#7a6e5a">Leão com asas</text>
-    <text x="130" y="95" text-anchor="middle" font-size="9" fill="#7a6e5a">Daniel 7:4</text>
-    <text x="130" y="155" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="8" fill="#5a4020" letter-spacing="1">605–539 a.C.</text>
-    <text x="130" y="168" text-anchor="middle" font-size="8.5" fill="#5a5040" font-style="italic">Nabucodonosor</text>
-
-    <!-- Kingdom 2: Persia -->
-    <circle cx="290" cy="130" r="8" fill="#8a9a7a" opacity="0.9"/>
-    <line x1="290" y1="138" x2="290" y2="185" stroke="#8a9a7a" stroke-width="1" opacity="0.6"/>
-    <text x="290" y="200" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="9.5" fill="#8a9a7a" letter-spacing="1">MEDO-PÉRSIA</text>
-    <text x="290" y="214" text-anchor="middle" font-size="9" fill="#7a6e5a">Urso com costelas</text>
-    <text x="290" y="227" text-anchor="middle" font-size="9" fill="#7a6e5a">Daniel 7:5 / 8:20</text>
-    <text x="290" y="110" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="8" fill="#5a4020" letter-spacing="1">539–331 a.C.</text>
-    <text x="290" y="98" text-anchor="middle" font-size="8.5" fill="#5a5040" font-style="italic">Ciro / Dario</text>
-
-    <!-- Kingdom 3: Greece -->
-    <circle cx="470" cy="130" r="8" fill="#7a9aaf" opacity="0.9"/>
-    <line x1="470" y1="122" x2="470" y2="75" stroke="#7a9aaf" stroke-width="1" opacity="0.6"/>
-    <text x="470" y="68" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="9.5" fill="#7a9aaf" letter-spacing="1">GRÉCIA</text>
-    <text x="470" y="82" text-anchor="middle" font-size="9" fill="#7a6e5a">Leopardo com asas</text>
-    <text x="470" y="95" text-anchor="middle" font-size="9" fill="#7a6e5a">Daniel 7:6 / 8:21</text>
-    <text x="470" y="155" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="8" fill="#5a4020" letter-spacing="1">331–146 a.C.</text>
-    <text x="470" y="168" text-anchor="middle" font-size="8.5" fill="#5a5040" font-style="italic">Alexandre</text>
-
-    <!-- Kingdom 4: Rome -->
-    <circle cx="640" cy="130" r="8" fill="#8b3020" opacity="0.9"/>
-    <line x1="640" y1="138" x2="640" y2="185" stroke="#8b3020" stroke-width="1" opacity="0.6"/>
-    <text x="640" y="200" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="9.5" fill="#c44040" letter-spacing="1">ROMA</text>
-    <text x="640" y="214" text-anchor="middle" font-size="9" fill="#7a6e5a">Besta terrível</text>
-    <text x="640" y="227" text-anchor="middle" font-size="9" fill="#7a6e5a">Daniel 7:7</text>
-    <text x="640" y="110" text-anchor="middle" font-family="'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif" font-size="8" fill="#5a4020" letter-spacing="1">146 a.C.→ futuro</text>
-    <text x="640" y="98" text-anchor="middle" font-size="8.5" fill="#5a5040" font-style="italic">10 chifres / Anticristo</text>
-
-    <!-- Special marker: Son of Man -->
-    <line x1="740" y1="130" x2="780" y2="130" stroke="#c9a84c" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
-    <text x="790" y="127" font-size="9" fill="#c9a84c" font-style="italic">Filho do</text>
-    <text x="790" y="138" font-size="9" fill="#c9a84c" font-style="italic">Homem</text>
-    <text x="790" y="149" font-size="7.5" fill="#7a6030">Dan 7:13</text>
-
-    <!-- Arrows between kingdoms -->
-    <path d="M 146 130 L 274 130" stroke="#3d2b14" stroke-width="1" marker-end="url(#arr)"/>
-    <path d="M 306 130 L 454 130" stroke="#3d2b14" stroke-width="1"/>
-    <path d="M 486 130 L 624 130" stroke="#3d2b14" stroke-width="1"/>
-
-    <!-- Bottom note -->
-    <text x="400" y="262" text-anchor="middle" font-size="8.5" fill="#5a4020" font-style="italic">As mesmas quatro potências aparecem em Daniel 2 como partes de uma estátua (ouro, prata, bronze, ferro)</text>
-  </svg>`;
+async function doLogin(){
+  const email=document.getElementById('lem').value.trim();
+  const pass=document.getElementById('lpw').value;
+  const err=document.getElementById('lerr');
+  const btn=document.getElementById('lbtn');
+  err.textContent='';btn.textContent='Entrando...';btn.disabled=true;
+  const{error}=await sb().auth.signInWithPassword({email,password:pass});
+  if(error){err.textContent='E-mail ou senha incorretos.';btn.textContent='Entrar';btn.disabled=false;}
+  else initApp();
 }
 
-function getBookAtChapter(n) {
-  for(let i=BOOKS.length-1;i>=0;i--) if(n>=BOOKS[i][3]) return BOOKS[i];
-  return BOOKS[0];
-}
-function getATProgress(n) { return Math.min(100,Math.round(Math.max(0,n-1)/AT_CHAPTERS*100)); }
-function getNTProgress(n) { if(n<930) return 0; return Math.min(100,Math.round((n-930)/NT_CHAPTERS*100)); }
-function formatDate(d) { return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}); }
-function formatDateFull(d) { return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'}); }
-function isToday(date) { const t=new Date(); return date.toDateString()===t.toDateString(); }
-function escapeHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function showToast(msg) {
-  const t=document.getElementById('toast');
-  if(!t) return;
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2400);
+function wkStatus(wn){
+  const wd=WEEKS_DATA[wn];if(!wd)return'none';
+  const dd=wd.days.filter((_,i)=>ST.completedDays[wn+'-'+i]).length;
+  const dc=!!ST.completedComplements[wn];
+  if(dd===wd.days.length&&dc)return'done';
+  if(dd>0||dc)return'prog';
+  return'none';
 }
 
-// ── SUPABASE CLIENT ──
-
-let _supa = null;
-function supa() {
-  if (!_supa) {
-    _supa = supabase.createClient('https://shhtdamjxoxxxsyeqhhi.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk', {
-      auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
-    });
-  }
-  return _supa;
-}
-
-async function getUser() {
-  const { data: { session }, error } = await supa().auth.getSession();
-  if (error) console.error('getSession error:', error.message);
-  console.log('getUser:', session?.user?.email || 'not logged in');
-  return session?.user || null;
-}
-
-let state = { completedDays: {}, completedComplements: {}, currentWeek: 32 };
-let notes = {};
-let _userId = null;
-
-async function loadFromSupabase(userId) {
-  _userId = userId;
-  console.log('loadFromSupabase for:', userId);
-  const { data: pd, error: pe } = await supa().from('progress').select('data').eq('user_id', userId).maybeSingle();
-  if (pe) console.error('load progress error:', pe.message);
-  if (pd?.data) { state = { ...state, ...pd.data }; console.log('progress loaded ok'); }
-  else console.log('no existing progress — will create on first save');
-  const { data: nd, error: ne } = await supa().from('notes').select('week_number,content').eq('user_id', userId);
-  if (ne) console.error('load notes error:', ne.message);
-  if (nd) { nd.forEach(r => { notes[r.week_number] = r.content; }); console.log('notes loaded:', nd.length); }
-}
-
-async function saveProgress() {
-  if (!_userId) return false;
-  const { error } = await supa().from('progress').upsert(
-    { user_id: _userId, data: state, updated_at: new Date().toISOString() },
-    { onConflict: 'user_id', ignoreDuplicates: false }
-  );
-  if (error) { console.error('saveProgress error:', error.code, error.message); return false; }
-  console.log('saveProgress ok');
-  return true;
-}
-
-async function saveNote(weekNum, content) {
-  if (!_userId) return;
-  notes[weekNum] = content;
-  const { error } = await supa().from('notes').upsert(
-    { user_id: _userId, week_number: weekNum, content: content, updated_at: new Date().toISOString() },
-    { onConflict: 'user_id,week_number', ignoreDuplicates: false }
-  );
-  if (error) console.error('saveNote error:', error.message);
-}
-
-async function doLogout() {
-  await supa().auth.signOut();
-  document.getElementById('index-view').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-}
-
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass  = document.getElementById('login-password').value;
-  const err   = document.getElementById('login-error');
-  err.textContent = '';
-  const btn = document.querySelector('.login-btn');
-  btn.textContent = 'Entrando...'; btn.disabled = true;
-  const {error} = await supa().auth.signInWithPassword({email,password:pass});
-  if(error) {
-    err.textContent = 'E-mail ou senha incorretos.';
-    btn.textContent = 'Entrar'; btn.disabled = false;
-  } else {
-    initApp();
-  }
-}
-
-async function doLogout() {
-  await supa().auth.signOut();
-  document.getElementById('index-view').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-}
-
-// ── INDEX RENDER ──
-const BLOCK_ORDER = ["Pentateuco","Históricos AT","Poéticos","Proféticos AT","Evangelhos + Atos","Epístolas + Ap"];
-
-function getWeekStatus(weekNum) {
-  try {
-    const wdata = WEEKS_DATA[weekNum];
-    if(!wdata) return 'none';
-    const doneDays = wdata.days.filter((_,i)=>state.completedDays[`${weekNum}-${i}`]).length;
-    const doneComp = !!state.completedComplements[weekNum];
-    if(doneDays===wdata.days.length && doneComp) return 'done';
-    if(doneDays>0||doneComp) return 'progress';
-    return 'none';
-  } catch(e) { return 'none'; }
-}
-
-function renderIndex() {
-  const container = document.getElementById('index-grid-container');
-  const statusLabels = {none:'Não iniciado',progress:'Em andamento',done:'Concluído'};
-  let html='', currentBlock='';
-  WEEKS_INDEX.forEach(w => {
-    if(w.block!==currentBlock) {
-      currentBlock=w.block;
-      if(html) html+='</div>';
-      html+=`<div class="index-block-label">${w.block}</div><div class="index-grid">`;
-    }
-    const status=getWeekStatus(w.num);
-    html+=`<div class="week-card ${w.hasContent?'has-content':''} status-${status}"
-      onclick="window.location.href='semanas.html?week=${w.num}'">
-      <div class="wc-header">
-        <div class="wc-num">Semana ${w.num}</div>
-        <div class="wc-status"><div class="status-dot ${status}"></div><span class="status-label">${statusLabels[status]}</span></div>
-      </div>
-      <div class="wc-dates">${formatDate(w.ds)} – ${formatDate(w.de)}</div>
-      <div class="wc-range">${w.range}</div>
-      <div class="wc-block">${w.block}${w.hasContent?' · Disponível':''}</div>
-      <div class="wc-arrow">→</div>
-    </div>`;
+function renderIndex(){
+  const c=document.getElementById('igc');
+  const sl={none:'Não iniciado',prog:'Em andamento',done:'Concluído'};
+  let html='',cb='';
+  WEEKS_INDEX.forEach(w=>{
+    if(w.block!==cb){cb=w.block;if(html)html+='</div>';html+='<div class="ibl">'+w.block+'</div><div class="igrd">';}
+    const s=wkStatus(w.num);
+    const sc=s==='prog'?'sp':s==='done'?'sd':'';
+    html+='<div class="wc '+(w.hasContent?'hc ':'')+sc+'" onclick="location.href='semanas.html?week='+w.num+''">'
+      +'<div class="wch"><div class="wcn">Semana '+w.num+'</div>'
+      +'<div class="wcs"><div class="sdt '+s+'"></div><span class="sdlbl">'+sl[s]+'</span></div></div>'
+      +'<div class="wcd">'+fmtD(w.ds)+' – '+fmtD(w.de)+'</div>'
+      +'<div class="wcr">'+w.range+'</div>'
+      +'<div class="wcb">'+w.block+(w.hasContent?' · Disponível':'')+'</div>'
+      +'<div class="wca">→</div></div>';
   });
-  if(html) html+='</div>';
-  container.innerHTML=html;
+  if(html)html+='</div>';
+  c.innerHTML=html;
 }
 
-// ── INIT ──
-async function initApp() {
-  const user = await getUser();
-  if(!user) return;
-  await loadFromSupabase(user.id);
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('index-view').style.display='block';
-  const em = document.getElementById('user-email');
-  if(em) em.textContent = user.email;
-  renderProgressHeader();
+async function initApp(){
+  const user=await getUser();
+  if(!user)return;
+  await dbLoad(user.id);
+  document.getElementById('lscr').style.display='none';
+  document.getElementById('iscr').style.display='block';
+  const e=document.getElementById('uemail');if(e)e.textContent=user.email;
+  renderPH();
   renderIndex();
 }
 
 initApp();
-</script>
-</body>
-</html>
+</script></body></html>

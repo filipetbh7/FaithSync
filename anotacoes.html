@@ -1,248 +1,333 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-<title>FaithSync · Anotações</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-
-  :root {
-    --parchment-dark:#1a1208; --parchment-mid:#2c1f0e; --parchment-warm:#3d2b14;
-    --ink-gold:#c9a84c; --ink-gold-bright:#e8c76a; --ink-gold-dim:#7a6030;
-    --ink-red:#8b2020; --ink-red-bright:#c44040;
-    --text-primary:#e8dcc8; --text-secondary:#b8a888; --text-dim:#7a6e5a;
-    --border-ornate:#5a4020; --border-gold:#8a6830;
-    --accent-blue:#4a7a9b; --accent-teal:#3a8a7a;
-    --glow-gold:rgba(201,168,76,0.15);
-    --status-none:#3a3020; --status-done:#3a6a3a;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    background-color:var(--parchment-dark); color:var(--text-primary);
-    font-family:'Palatino Linotype','Palatino','Book Antiqua',Georgia,serif;
-    font-size:16px; line-height:1.7; min-height:100vh;
-    background-image:
-      radial-gradient(ellipse at 20% 20%,rgba(201,168,76,0.04) 0%,transparent 50%),
-      radial-gradient(ellipse at 80% 80%,rgba(139,32,32,0.04) 0%,transparent 50%);
-  }
-  .site-header { text-align:center; padding:2.2rem 2rem 1.6rem; position:relative; border-bottom:1px solid var(--border-ornate); }
-  .site-header::before { content:''; position:absolute; bottom:-1px; left:50%; transform:translateX(-50%); width:60%; height:1px; background:linear-gradient(90deg,transparent,var(--ink-gold),transparent); }
-  .header-ornament { color:var(--ink-gold-dim); font-size:0.68rem; letter-spacing:0.4em; text-transform:uppercase; margin-bottom:0.5rem; }
-  .site-title { font-size:clamp(1.3rem,4vw,2.1rem); color:var(--ink-gold-bright); font-weight:700; line-height:1.2; text-shadow:0 0 40px rgba(201,168,76,0.3); letter-spacing:0.05em; }
-  .site-subtitle { font-size:0.77rem; color:var(--text-dim); letter-spacing:0.22em; margin-top:0.4rem; }
-  .top-nav { display:flex; align-items:center; justify-content:center; gap:0.8rem; padding:0.55rem 2rem; border-bottom:1px solid var(--border-ornate); background:rgba(0,0,0,0.15); flex-wrap:wrap; }
-  .tnav-btn { background:none; border:1px solid var(--border-ornate); color:var(--ink-gold-dim); font-family:inherit; font-size:0.65rem; letter-spacing:0.18em; cursor:pointer; padding:0.32rem 0.9rem; text-transform:uppercase; transition:all 0.2s; }
-  .tnav-btn:hover { border-color:var(--ink-gold); color:var(--ink-gold); background:var(--glow-gold); }
-  .tnav-btn.active { border-color:var(--ink-gold); color:var(--ink-gold); background:var(--glow-gold); }
-  .tnav-sep { color:var(--border-ornate); font-size:0.8rem; }
-  .user-info { font-size:0.62rem; color:var(--text-dim); letter-spacing:0.1em; }
-  .logout-btn { background:none; border:none; color:var(--text-dim); font-family:inherit; font-size:0.62rem; cursor:pointer; letter-spacing:0.1em; padding:0; transition:color 0.2s; }
-  .logout-btn:hover { color:var(--ink-red-bright); }
-  /* Progress */
-  .progress-section { max-width:900px; margin:1.6rem auto 0; padding:0 2rem; }
-  .progress-label { display:flex; justify-content:space-between; font-size:0.68rem; letter-spacing:0.15em; color:var(--text-dim); margin-bottom:0.4rem; }
-  .progress-track { height:5px; background:var(--parchment-warm); border-radius:3px; overflow:hidden; border:1px solid var(--border-ornate); }
-  .progress-fill { height:100%; background:linear-gradient(90deg,var(--ink-gold-dim),var(--ink-gold-bright)); border-radius:3px; transition:width 0.8s ease; box-shadow:0 0 8px rgba(201,168,76,0.4); }
-  .progress-stats { display:flex; gap:2rem; margin-top:0.9rem; flex-wrap:wrap; }
-  .stat-item { display:flex; flex-direction:column; gap:0.1rem; }
-  .stat-value { font-size:1.2rem; color:var(--ink-gold); font-weight:700; }
-  .stat-label { font-size:0.68rem; color:var(--text-dim); letter-spacing:0.08em; }
-  .stats-divider { height:1px; background:linear-gradient(90deg,transparent,var(--border-ornate),transparent); margin:0.9rem 0; }
-  .progress-stats-2 { display:flex; gap:0; flex-wrap:wrap; }
-  .stat-item-2 { flex:1; min-width:110px; padding:0.45rem 0.8rem; border-left:1px solid var(--border-ornate); }
-  .stat-item-2:first-child { border-left:none; padding-left:0; }
-  .stat-bar-wrap { display:flex; align-items:center; gap:0.5rem; margin-top:0.12rem; }
-  .stat-bar-mini { flex:1; height:3px; background:var(--parchment-warm); border-radius:2px; overflow:hidden; }
-  .stat-bar-mini-fill { height:100%; border-radius:2px; transition:width 0.8s ease; }
-  .fill-gold { background:linear-gradient(90deg,var(--ink-gold-dim),var(--ink-gold)); }
-  .fill-blue { background:linear-gradient(90deg,#3a5a7a,var(--accent-blue)); }
-  .fill-teal { background:linear-gradient(90deg,#2a6a5a,var(--accent-teal)); }
-  .stat-label-2 { font-size:0.59rem; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
-  .stat-pct { font-size:0.68rem; color:var(--text-secondary); white-space:nowrap; }
-  .book-verse-banner { margin:0.9rem 0 0; padding:0.75rem 1.1rem; border:1px solid var(--border-ornate); border-left:3px solid var(--ink-gold-dim); background:rgba(0,0,0,0.15); display:flex; align-items:flex-start; gap:0.9rem; }
-  .book-badge { font-size:0.57rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-gold-dim); white-space:nowrap; padding-top:0.2rem; flex-shrink:0; }
-  .book-verse-text { font-size:0.82rem; font-style:italic; color:var(--text-secondary); line-height:1.5; }
-  .book-verse-ref { font-size:0.68rem; color:var(--ink-gold-dim); margin-top:0.12rem; }
-  /* Toast */
-  .toast { position:fixed; bottom:2rem; right:2rem; background:var(--parchment-warm); border:1px solid var(--ink-gold-dim); color:var(--text-primary); font-family:inherit; font-size:0.68rem; letter-spacing:0.12em; padding:0.7rem 1.2rem; opacity:0; transform:translateY(10px); transition:all 0.3s; pointer-events:none; z-index:999; max-width:260px; }
-  .toast.show { opacity:1; transform:translateY(0); }
-  footer { text-align:center; padding:2rem; font-size:0.68rem; color:var(--text-dim); border-top:1px solid var(--border-ornate); font-style:italic; }
-  @keyframes fadeInUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-  .fade-in { animation:fadeInUp 0.35s ease both; }
-  @media(max-width:600px) { .progress-stats{gap:1rem;} .top-nav{gap:0.5rem;} }
-
-
-  .notes-page { max-width:900px; margin:1.5rem auto 3rem; padding:0 2rem; }
-  .notes-page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.5rem; }
-  .notes-page-title { font-size:0.95rem; color:var(--ink-gold-bright); font-weight:700; letter-spacing:0.08em; }
-  .notes-page-sub { font-size:0.73rem; color:var(--text-dim); font-style:italic; margin-top:0.15rem; }
-  .notes-empty { text-align:center; padding:3rem 2rem; font-size:0.85rem; color:var(--text-dim); font-style:italic; border:1px solid var(--border-ornate); background:var(--parchment-mid); }
-  .note-entry { margin-bottom:1rem; border:1px solid var(--border-ornate); background:var(--parchment-mid); overflow:hidden; }
-  .note-entry-header { display:flex; align-items:center; justify-content:space-between; padding:0.7rem 1rem; background:rgba(0,0,0,0.2); border-bottom:1px solid var(--border-ornate); flex-wrap:wrap; gap:0.35rem; cursor:pointer; transition:background 0.2s; }
-  .note-entry-header:hover { background:rgba(201,168,76,0.06); }
-  .note-entry-week { font-size:0.62rem; letter-spacing:0.2em; color:var(--ink-gold-dim); text-transform:uppercase; }
-  .note-entry-range { font-size:0.86rem; color:var(--text-primary); font-weight:500; }
-  .note-entry-dates { font-size:0.7rem; color:var(--text-dim); font-style:italic; }
-  .note-entry-link { font-size:0.62rem; letter-spacing:0.15em; color:var(--ink-gold-dim); text-transform:uppercase; cursor:pointer; padding:0.28rem 0.55rem; border:1px solid var(--border-ornate); transition:all 0.2s; background:none; font-family:inherit; white-space:nowrap; }
-  .note-entry-link:hover { border-color:var(--ink-gold); color:var(--ink-gold); }
-  .note-entry-body { padding:0.9rem 1rem; font-size:0.88rem; color:var(--text-secondary); line-height:1.7; white-space:pre-wrap; border-left:3px solid var(--ink-gold-dim); }
-</style>
-</head>
-<body>
-
-<header class="site-header">
-  <div class="header-ornament">✦ FaithSync ✦</div>
-  <h1 class="site-title">Plano de Leitura Bíblica</h1>
-  <p class="site-subtitle">Estudo em Família · Gênesis ao Apocalipse</p>
-</header>
-<div class="top-nav">
-  <button class="tnav-btn" onclick="window.location.href='index.html'">≡ Índice</button><span class="tnav-sep">·</span><button class="tnav-btn" onclick="window.location.href='semanas.html'">📖 Semanas</button><span class="tnav-sep">·</span><button class="tnav-btn active" onclick="window.location.href='anotacoes.html'">✎ Anotações</button><span class="tnav-sep">·</span>
-  <span class="user-info" id="user-email"></span>
-  <button class="logout-btn" onclick="doLogout()">sair</button>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="mobile-web-app-capable" content="yes"><title>FaithSync · Anotações</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>:root{--pd:#1a1208;--pm:#2c1f0e;--pw:#3d2b14;--ig:#c9a84c;--igb:#e8c76a;--igd:#7a6030;--ir:#8b2020;--irb:#c44040;--tp:#e8dcc8;--ts:#b8a888;--td:#7a6e5a;--bo:#5a4020;--bg:#8a6830;--ab:#4a7a9b;--at:#3a8a7a;--gg:rgba(201,168,76,0.15);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--pd);color:var(--tp);font-family:'Palatino Linotype','Palatino','Book Antiqua',Georgia,serif;font-size:16px;line-height:1.7;min-height:100vh;background-image:radial-gradient(ellipse at 20% 20%,rgba(201,168,76,0.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(139,32,32,0.04) 0%,transparent 50%);}
+.hdr{text-align:center;padding:2rem 2rem 1.5rem;position:relative;border-bottom:1px solid var(--bo);}
+.hdr::before{content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:60%;height:1px;background:linear-gradient(90deg,transparent,var(--ig),transparent);}
+.hdrorn{color:var(--igd);font-size:.68rem;letter-spacing:.4em;text-transform:uppercase;margin-bottom:.5rem;}
+.hdrttl{font-size:clamp(1.3rem,4vw,2.1rem);color:var(--igb);font-weight:700;line-height:1.2;text-shadow:0 0 40px rgba(201,168,76,0.3);letter-spacing:.05em;}
+.hdrsub{font-size:.77rem;color:var(--td);letter-spacing:.22em;margin-top:.3rem;}
+.tnav{display:flex;align-items:center;justify-content:center;gap:.7rem;padding:.5rem 2rem;border-bottom:1px solid var(--bo);background:rgba(0,0,0,.15);flex-wrap:wrap;}
+.tbtn{background:none;border:1px solid var(--bo);color:var(--igd);font-family:inherit;font-size:.63rem;letter-spacing:.18em;cursor:pointer;padding:.3rem .85rem;text-transform:uppercase;transition:all .2s;}
+.tbtn:hover,.tbtn.act{border-color:var(--ig);color:var(--ig);background:var(--gg);}
+.tsep{color:var(--bo);font-size:.8rem;}
+.uinf{font-size:.6rem;color:var(--td);letter-spacing:.08em;}
+.lout{background:none;border:none;color:var(--td);font-family:inherit;font-size:.6rem;cursor:pointer;transition:color .2s;}
+.lout:hover{color:var(--irb);}
+.psec{max-width:900px;margin:1.5rem auto 0;padding:0 2rem;}
+.plbl{display:flex;justify-content:space-between;font-size:.67rem;letter-spacing:.15em;color:var(--td);margin-bottom:.4rem;}
+.ptrk{height:5px;background:var(--pw);border-radius:3px;overflow:hidden;border:1px solid var(--bo);}
+.pfil{height:100%;background:linear-gradient(90deg,var(--igd),var(--igb));border-radius:3px;transition:width .8s ease;box-shadow:0 0 8px rgba(201,168,76,.4);}
+.psts{display:flex;gap:1.8rem;margin-top:.9rem;flex-wrap:wrap;}
+.si{display:flex;flex-direction:column;gap:.1rem;}
+.sv{font-size:1.2rem;color:var(--ig);font-weight:700;}
+.sl{font-size:.67rem;color:var(--td);letter-spacing:.08em;}
+.sdiv{height:1px;background:linear-gradient(90deg,transparent,var(--bo),transparent);margin:.85rem 0;}
+.psts2{display:flex;gap:0;flex-wrap:wrap;}
+.si2{flex:1;min-width:110px;padding:.42rem .75rem;border-left:1px solid var(--bo);}
+.si2:first-child{border-left:none;padding-left:0;}
+.sbw{display:flex;align-items:center;gap:.45rem;margin-top:.1rem;}
+.sbm{flex:1;height:3px;background:var(--pw);border-radius:2px;overflow:hidden;}
+.sbf{height:100%;border-radius:2px;transition:width .8s ease;}
+.fg{background:linear-gradient(90deg,var(--igd),var(--ig));}
+.fb{background:linear-gradient(90deg,#3a5a7a,var(--ab));}
+.ft{background:linear-gradient(90deg,#2a6a5a,var(--at));}
+.sl2{font-size:.58rem;color:var(--td);letter-spacing:.1em;text-transform:uppercase;}
+.spct{font-size:.67rem;color:var(--ts);white-space:nowrap;}
+.bvb{margin:.85rem 0 0;padding:.72rem 1rem;border:1px solid var(--bo);border-left:3px solid var(--igd);background:rgba(0,0,0,.15);display:flex;align-items:flex-start;gap:.85rem;}
+.bbdg{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--igd);white-space:nowrap;padding-top:.2rem;flex-shrink:0;}
+.bvt{font-size:.8rem;font-style:italic;color:var(--ts);line-height:1.5;}
+.bvr{font-size:.67rem;color:var(--igd);margin-top:.1rem;}
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--pw);border:1px solid var(--igd);color:var(--tp);font-family:inherit;font-size:.67rem;letter-spacing:.12em;padding:.7rem 1.2rem;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;z-index:999;max-width:260px;}
+.toast.show{opacity:1;transform:translateY(0);}
+footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-top:1px solid var(--bo);font-style:italic;}
+@keyframes fi{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi .35s ease both;}
+@media(max-width:600px){.psts{gap:1rem;}.tnav{gap:.4rem;}}
+.npg{max-width:900px;margin:1.4rem auto 3rem;padding:0 2rem;}
+.nphdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:.5rem;}
+.npttl{font-size:.93rem;color:var(--igb);font-weight:700;letter-spacing:.08em;}
+.npsub{font-size:.72rem;color:var(--td);font-style:italic;margin-top:.15rem;}
+.npemp{text-align:center;padding:3rem 2rem;font-size:.84rem;color:var(--td);font-style:italic;border:1px solid var(--bo);background:var(--pm);}
+.ne{margin-bottom:.95rem;border:1px solid var(--bo);background:var(--pm);overflow:hidden;}
+.neh{display:flex;align-items:center;justify-content:space-between;padding:.68rem .95rem;background:rgba(0,0,0,.2);border-bottom:1px solid var(--bo);flex-wrap:wrap;gap:.32rem;cursor:pointer;transition:background .2s;}
+.neh:hover{background:rgba(201,168,76,.06);}
+.newk{font-size:.6rem;letter-spacing:.2em;color:var(--igd);text-transform:uppercase;}
+.ner{font-size:.84rem;color:var(--tp);font-weight:500;}
+.ned{font-size:.68rem;color:var(--td);font-style:italic;}
+.nel{font-size:.6rem;letter-spacing:.15em;color:var(--igd);text-transform:uppercase;cursor:pointer;padding:.26rem .52rem;border:1px solid var(--bo);transition:all .2s;background:none;font-family:inherit;white-space:nowrap;}
+.nel:hover{border-color:var(--ig);color:var(--ig);}
+.neb{padding:.88rem .95rem;font-size:.87rem;color:var(--ts);line-height:1.7;white-space:pre-wrap;border-left:3px solid var(--igd);}
+</style></head><body>
+<header class="hdr"><div class="hdrorn">✦ FaithSync ✦</div><h1 class="hdrttl">Plano de Leitura Bíblica</h1><p class="hdrsub">Estudo em Família · Gênesis ao Apocalipse</p></header><div class="tnav"><button class="tbtn" onclick="location.href='index.html'">≡ Índice</button><span class="tsep">·</span><button class="tbtn" onclick="location.href='semanas.html'">📖 Semanas</button><span class="tsep">·</span><button class="tbtn act" onclick="location.href='anotacoes.html'">✎ Anotações</button><span class="tsep">·</span><span class="uinf" id="uemail"></span><button class="lout" onclick="doLogout()">sair</button></div>
+<div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil" style="width:0%"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas concluídas</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Capítulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Velho Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" style="width:0%"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 capítulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" style="width:0%"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 capítulos</div></div></div></div>
+<div class="npg">
+  <div class="nphdr"><div><div class="npttl">✎ Anotações do Plano</div><div class="npsub">Apenas leitura · Edite na página de cada semana · Ordenadas por semana do plano</div></div></div>
+  <div id="nl"></div>
 </div>
-
-<div class="progress-section">
-  <div class="progress-label"><span>Progresso Geral</span><span id="progress-pct">0%</span></div>
-  <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-  <div class="progress-stats">
-    <div class="stat-item"><span class="stat-value" id="stat-weeks">0 / 87</span><span class="stat-label">Semanas concluídas</span></div>
-    <div class="stat-item"><span class="stat-value" id="stat-chapters">0 / 1189</span><span class="stat-label">Capítulos lidos</span></div>
-    <div class="stat-item"><span class="stat-value" id="stat-streak">0</span><span class="stat-label">Dias seguidos</span></div>
-  </div>
-  <div class="stats-divider"></div>
-  <div class="progress-stats-2">
-    <div class="stat-item-2">
-      <div class="stat-label-2">Velho Testamento</div>
-      <div class="stat-bar-wrap"><div class="stat-bar-mini"><div class="stat-bar-mini-fill fill-blue" id="bar-at" style="width:0%"></div></div><span class="stat-pct" id="pct-at">0%</span></div>
-      <div style="font-size:.68rem;color:var(--text-dim);margin-top:.12rem">929 capítulos</div>
-    </div>
-    <div class="stat-item-2">
-      <div class="stat-label-2">Novo Testamento</div>
-      <div class="stat-bar-wrap"><div class="stat-bar-mini"><div class="stat-bar-mini-fill fill-teal" id="bar-nt" style="width:0%"></div></div><span class="stat-pct" id="pct-nt">0%</span></div>
-      <div style="font-size:.68rem;color:var(--text-dim);margin-top:.12rem">260 capítulos</div>
-    </div>
-  </div>
-</div>
-
-<div class="notes-page">
-  <div class="notes-page-header">
-    <div>
-      <div class="notes-page-title">✎ Anotações do Plano</div>
-      <div class="notes-page-sub">Apenas leitura · Edite na página de cada semana · Ordenadas por semana do plano</div>
-    </div>
-  </div>
-  <div id="notes-list"></div>
-</div>
-
 <div class="toast" id="toast"></div>
 <footer>FaithSync · Sincronizando a fé em família</footer>
-
 <script>
 
-const SUPABASE_URL = 'https://shhtdamjxoxxxsyeqhhi.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
-
-const SUPABASE_URL = 'https://shhtdamjxoxxxsyeqhhi.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
-
-let _supa = null;
-function supa() {
-  if (!_supa) {
-    _supa = supabase.createClient('https://shhtdamjxoxxxsyeqhhi.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk', {
-      auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
-    });
+const SUPABASE_URL='https://shhtdamjxoxxxsyeqhhi.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
+const TOTAL_CHAPTERS=1189,AT_CHAPTERS=929,NT_CHAPTERS=260,TOTAL_WEEKS=87;
+const BOOKS = [
+  ["Gênesis",50,"AT",1,"No princípio, criou Deus os céus e a terra.","Gênesis 1:1"],
+  ["Êxodo",40,"AT",51,"Eu sou o que sou.","Êxodo 3:14"],
+  ["Levítico",27,"AT",91,"Sede santos, porque eu, o Senhor vosso Deus, sou santo.","Levítico 19:2"],
+  ["Números",36,"AT",118,"O Senhor te abençoe e te guarde.","Números 6:24"],
+  ["Deuteronômio",34,"AT",154,"Amarás o Senhor teu Deus de todo o teu coração.","Deuteronômio 6:5"],
+  ["Josué",24,"AT",188,"Escolhei hoje a quem sirveis.","Josué 24:15"],
+  ["Juízes",21,"AT",212,"Naqueles dias não havia rei em Israel; cada um fazia o que parecia reto aos seus olhos.","Juízes 21:25"],
+  ["Rute",4,"AT",233,"Onde tu morreres, morrerei eu.","Rute 1:17"],
+  ["1 Samuel",31,"AT",237,"O homem olha para a aparência exterior, mas o Senhor olha para o coração.","1 Samuel 16:7"],
+  ["2 Samuel",24,"AT",268,"Teu amor por mim era maravilhoso, superior ao amor das mulheres.","2 Samuel 1:26"],
+  ["1 Reis",22,"AT",292,"O Senhor é Deus; o Senhor é Deus!","1 Reis 18:39"],
+  ["2 Reis",25,"AT",314,"Não vos faltou coisa alguma de tudo o que disse.","2 Reis 10:10"],
+  ["1 Crônicas",29,"AT",339,"Vosso é, Senhor, a grandeza, o poder, a glória, a vitória e a majestade.","1 Crônicas 29:11"],
+  ["2 Crônicas",36,"AT",368,"Se o meu povo, que se chama pelo meu nome, se humilhar e orar...","2 Crônicas 7:14"],
+  ["Esdras",10,"AT",404,"A mão bondosa do seu Deus estava sobre ele.","Esdras 7:9"],
+  ["Neemias",13,"AT",414,"A alegria do Senhor é a nossa força.","Neemias 8:10"],
+  ["Ester",10,"AT",427,"Quem sabe se não foi para um momento como este que chegaste ao reino?","Ester 4:14"],
+  ["Jó",42,"AT",437,"O Senhor o deu, o Senhor o tomou; bendito seja o nome do Senhor.","Jó 1:21"],
+  ["Salmos",150,"AT",479,"O Senhor é o meu pastor; nada me faltará.","Salmos 23:1"],
+  ["Provérbios",31,"AT",629,"Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento.","Provérbios 3:5"],
+  ["Eclesiastes",12,"AT",660,"O fim de tudo o que se ouviu é este: teme a Deus e guarda os seus mandamentos.","Eclesiastes 12:13"],
+  ["Cantares",8,"AT",672,"Forte como a morte é o amor.","Cantares 8:6"],
+  ["Isaías",66,"AT",680,"Mas os que esperam no Senhor renovarão as suas forças.","Isaías 40:31"],
+  ["Jeremias",52,"AT",746,"Porque eu bem sei os planos que tenho para vós, diz o Senhor.","Jeremias 29:11"],
+  ["Lamentações",5,"AT",798,"As misericórdias do Senhor não têm fim; as suas compaixões não se esgotam.","Lamentações 3:22"],
+  ["Ezequiel",48,"AT",803,"Eu vos darei um coração novo e porei dentro de vós um espírito novo.","Ezequiel 36:26"],
+  ["Daniel",12,"AT",851,"Os entendidos resplandecerão como o fulgor do firmamento.","Daniel 12:3"],
+  ["Oséias",14,"AT",863,"Meu povo perece por falta de conhecimento.","Oséias 4:6"],
+  ["Joel",3,"AT",877,"Derramarei o meu Espírito sobre toda a carne.","Joel 2:28"],
+  ["Amós",9,"AT",880,"Corra o direito como as águas, e a justiça como ribeiro perene.","Amós 5:24"],
+  ["Obadias",1,"AT",889,"Como procedeste, assim se fará contigo.","Obadias 1:15"],
+  ["Jonas",4,"AT",890,"A salvação pertence ao Senhor.","Jonas 2:9"],
+  ["Miquéias",7,"AT",894,"Fazer justiça, amar a misericórdia e andar humildemente com o teu Deus.","Miquéias 6:8"],
+  ["Naum",3,"AT",901,"O Senhor é bom, uma fortaleza no dia da angústia.","Naum 1:7"],
+  ["Habacuque",3,"AT",904,"O justo viverá pela sua fé.","Habacuque 2:4"],
+  ["Sofonias",3,"AT",907,"O Senhor teu Deus está no meio de ti como herói que salva.","Sofonias 3:17"],
+  ["Ageu",2,"AT",910,"A glória futura desta casa será maior do que a da anterior.","Ageu 2:9"],
+  ["Zacarias",14,"AT",912,"Não por força nem por poder, mas pelo meu Espírito, diz o Senhor.","Zacarias 4:6"],
+  ["Malaquias",4,"AT",926,"Para vós outros que temeis o meu nome, nascerá o sol da justiça.","Malaquias 4:2"],
+  ["Mateus",28,"NT",930,"Ide, portanto, e fazei discípulos de todas as nações.","Mateus 28:19"],
+  ["Marcos",16,"NT",958,"O Filho do homem não veio para ser servido, mas para servir.","Marcos 10:45"],
+  ["Lucas",24,"NT",974,"O Filho do homem veio buscar e salvar o perdido.","Lucas 19:10"],
+  ["João",21,"NT",998,"Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito.","João 3:16"],
+  ["Atos",28,"NT",1019,"Recebereis poder, ao descer sobre vós o Espírito Santo.","Atos 1:8"],
+  ["Romanos",16,"NT",1047,"Tudo concorre para o bem daqueles que amam a Deus.","Romanos 8:28"],
+  ["1 Coríntios",16,"NT",1063,"O amor nunca falha.","1 Coríntios 13:8"],
+  ["2 Coríntios",13,"NT",1079,"A minha graça te basta, porque o poder se aperfeiçoa na fraqueza.","2 Coríntios 12:9"],
+  ["Gálatas",6,"NT",1092,"Já não sou eu quem vive, mas Cristo vive em mim.","Gálatas 2:20"],
+  ["Efésios",6,"NT",1098,"Sede fortes no Senhor e na força do seu poder.","Efésios 6:10"],
+  ["Filipenses",4,"NT",1104,"Tudo posso naquele que me fortalece.","Filipenses 4:13"],
+  ["Colossenses",4,"NT",1108,"Cristo em vós, a esperança da glória.","Colossenses 1:27"],
+  ["1 Tessalonicenses",5,"NT",1112,"Regozijai-vos sempre. Orai sem cessar. Em tudo dai graças.","1 Tessalonicenses 5:16-18"],
+  ["2 Tessalonicenses",3,"NT",1117,"O próprio Senhor da paz vos dê paz em toda a circunstância.","2 Tessalonicenses 3:16"],
+  ["1 Timóteo",6,"NT",1120,"Não te envergonhes do testemunho do nosso Senhor.","2 Timóteo 1:8"],
+  ["2 Timóteo",4,"NT",1126,"Combati o bom combate, terminei a corrida, guardei a fé.","2 Timóteo 4:7"],
+  ["Tito",3,"NT",1130,"A graça de Deus se manifestou para a salvação de todos os homens.","Tito 2:11"],
+  ["Filemom",1,"NT",1133,"Talvez ele se tenha apartado por um momento para que o recebesses para sempre.","Filemom 1:15"],
+  ["Hebreus",13,"NT",1134,"A fé é a certeza daquilo que esperamos e a prova das coisas que não vemos.","Hebreus 11:1"],
+  ["Tiago",5,"NT",1147,"A fé sem obras é morta.","Tiago 2:26"],
+  ["1 Pedro",5,"NT",1152,"Lançai sobre ele toda a vossa ansiedade, porque ele tem cuidado de vós.","1 Pedro 5:7"],
+  ["2 Pedro",3,"NT",1157,"O Senhor não retarda a sua promessa, como alguns a julgam demorada.","2 Pedro 3:9"],
+  ["1 João",5,"NT",1160,"Deus é amor.","1 João 4:8"],
+  ["2 João",1,"NT",1165,"Quem persevera na doutrina de Cristo, esse tem o Pai e o Filho.","2 João 1:9"],
+  ["3 João",1,"NT",1166,"Amado, ora eu desejo que te vá bem em tudo.","3 João 1:2"],
+  ["Judas",1,"NT",1167,"Àquele que é poderoso para vos guardar de tropeçar...","Judas 1:24"],
+  ["Apocalipse",22,"NT",1168,"Eis que venho sem demora, e comigo está o meu galardão.","Apocalipse 22:12"]
+];
+const WEEKS_INDEX = [
+  { num:1, ds:new Date(2026,3,27), de:new Date(2026,4,3), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:2, ds:new Date(2026,4,4), de:new Date(2026,4,10), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:3, ds:new Date(2026,4,11), de:new Date(2026,4,17), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:4, ds:new Date(2026,4,18), de:new Date(2026,4,24), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:5, ds:new Date(2026,4,25), de:new Date(2026,4,31), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:6, ds:new Date(2026,5,1), de:new Date(2026,5,7), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:7, ds:new Date(2026,5,8), de:new Date(2026,5,14), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:8, ds:new Date(2026,5,15), de:new Date(2026,5,21), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:9, ds:new Date(2026,5,22), de:new Date(2026,5,28), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:10, ds:new Date(2026,5,29), de:new Date(2026,6,5), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:11, ds:new Date(2026,6,6), de:new Date(2026,6,12), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:12, ds:new Date(2026,6,13), de:new Date(2026,6,19), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:13, ds:new Date(2026,6,20), de:new Date(2026,6,26), block:"Pentateuco", hasContent:false, range:"Bloco: Pentateuco" },
+  { num:14, ds:new Date(2026,6,27), de:new Date(2026,7,2), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:15, ds:new Date(2026,7,3), de:new Date(2026,7,9), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:16, ds:new Date(2026,7,10), de:new Date(2026,7,16), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:17, ds:new Date(2026,7,17), de:new Date(2026,7,23), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:18, ds:new Date(2026,7,24), de:new Date(2026,7,30), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:19, ds:new Date(2026,7,31), de:new Date(2026,8,6), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:20, ds:new Date(2026,8,7), de:new Date(2026,8,13), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:21, ds:new Date(2026,8,14), de:new Date(2026,8,20), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:22, ds:new Date(2026,8,21), de:new Date(2026,8,27), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:23, ds:new Date(2026,8,28), de:new Date(2026,9,4), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:24, ds:new Date(2026,9,5), de:new Date(2026,9,11), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:25, ds:new Date(2026,9,12), de:new Date(2026,9,18), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:26, ds:new Date(2026,9,19), de:new Date(2026,9,25), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:27, ds:new Date(2026,9,26), de:new Date(2026,10,1), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:28, ds:new Date(2026,10,2), de:new Date(2026,10,8), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:29, ds:new Date(2026,10,9), de:new Date(2026,10,15), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:30, ds:new Date(2026,10,16), de:new Date(2026,10,22), block:"Históricos AT", hasContent:false, range:"Bloco: Históricos AT" },
+  { num:31, ds:new Date(2026,10,23), de:new Date(2026,10,29), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:32, ds:new Date(2026,10,30), de:new Date(2026,11,6), block:"Poéticos", hasContent:true, range:"Daniel 7 – Daniel 12" },
+  { num:33, ds:new Date(2026,11,7), de:new Date(2026,11,13), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:34, ds:new Date(2026,11,14), de:new Date(2026,11,20), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:35, ds:new Date(2026,11,21), de:new Date(2026,11,27), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:36, ds:new Date(2026,11,28), de:new Date(2027,0,3), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:37, ds:new Date(2027,0,4), de:new Date(2027,0,10), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:38, ds:new Date(2027,0,11), de:new Date(2027,0,17), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:39, ds:new Date(2027,0,18), de:new Date(2027,0,24), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:40, ds:new Date(2027,0,25), de:new Date(2027,0,31), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:41, ds:new Date(2027,1,1), de:new Date(2027,1,7), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:42, ds:new Date(2027,1,8), de:new Date(2027,1,14), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:43, ds:new Date(2027,1,15), de:new Date(2027,1,21), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:44, ds:new Date(2027,1,22), de:new Date(2027,1,28), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:45, ds:new Date(2027,2,1), de:new Date(2027,2,7), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:46, ds:new Date(2027,2,8), de:new Date(2027,2,14), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:47, ds:new Date(2027,2,15), de:new Date(2027,2,21), block:"Poéticos", hasContent:false, range:"Bloco: Poéticos" },
+  { num:48, ds:new Date(2027,2,22), de:new Date(2027,2,28), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:49, ds:new Date(2027,2,29), de:new Date(2027,3,4), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:50, ds:new Date(2027,3,5), de:new Date(2027,3,11), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:51, ds:new Date(2027,3,12), de:new Date(2027,3,18), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:52, ds:new Date(2027,3,19), de:new Date(2027,3,25), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:53, ds:new Date(2027,3,26), de:new Date(2027,4,2), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:54, ds:new Date(2027,4,3), de:new Date(2027,4,9), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:55, ds:new Date(2027,4,10), de:new Date(2027,4,16), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:56, ds:new Date(2027,4,17), de:new Date(2027,4,23), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:57, ds:new Date(2027,4,24), de:new Date(2027,4,30), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:58, ds:new Date(2027,4,31), de:new Date(2027,5,6), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:59, ds:new Date(2027,5,7), de:new Date(2027,5,13), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:60, ds:new Date(2027,5,14), de:new Date(2027,5,20), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:61, ds:new Date(2027,5,21), de:new Date(2027,5,27), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:62, ds:new Date(2027,5,28), de:new Date(2027,6,4), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:63, ds:new Date(2027,6,5), de:new Date(2027,6,11), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:64, ds:new Date(2027,6,12), de:new Date(2027,6,18), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:65, ds:new Date(2027,6,19), de:new Date(2027,6,25), block:"Proféticos AT", hasContent:false, range:"Bloco: Proféticos AT" },
+  { num:66, ds:new Date(2027,6,26), de:new Date(2027,7,1), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:67, ds:new Date(2027,7,2), de:new Date(2027,7,8), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:68, ds:new Date(2027,7,9), de:new Date(2027,7,15), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:69, ds:new Date(2027,7,16), de:new Date(2027,7,22), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:70, ds:new Date(2027,7,23), de:new Date(2027,7,29), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:71, ds:new Date(2027,7,30), de:new Date(2027,8,5), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:72, ds:new Date(2027,8,6), de:new Date(2027,8,12), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:73, ds:new Date(2027,8,13), de:new Date(2027,8,19), block:"Evangelhos + Atos", hasContent:false, range:"Bloco: Evangelhos + Atos" },
+  { num:74, ds:new Date(2027,8,20), de:new Date(2027,8,26), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:75, ds:new Date(2027,8,27), de:new Date(2027,9,3), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:76, ds:new Date(2027,9,4), de:new Date(2027,9,10), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:77, ds:new Date(2027,9,11), de:new Date(2027,9,17), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:78, ds:new Date(2027,9,18), de:new Date(2027,9,24), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:79, ds:new Date(2027,9,25), de:new Date(2027,9,31), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:80, ds:new Date(2027,10,1), de:new Date(2027,10,7), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:81, ds:new Date(2027,10,8), de:new Date(2027,10,14), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:82, ds:new Date(2027,10,15), de:new Date(2027,10,21), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:83, ds:new Date(2027,10,22), de:new Date(2027,10,28), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:84, ds:new Date(2027,10,29), de:new Date(2027,11,5), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:85, ds:new Date(2027,11,6), de:new Date(2027,11,12), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:86, ds:new Date(2027,11,13), de:new Date(2027,11,19), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" },
+  { num:87, ds:new Date(2027,11,20), de:new Date(2027,11,26), block:"Epístolas + Ap", hasContent:false, range:"Bloco: Epístolas + Ap" }
+];
+function getBook(n){for(let i=BOOKS.length-1;i>=0;i--)if(n>=BOOKS[i][3])return BOOKS[i];return BOOKS[0];}
+function atPct(n){return Math.min(100,Math.round(Math.max(0,n-1)/AT_CHAPTERS*100));}
+function ntPct(n){if(n<930)return 0;return Math.min(100,Math.round((n-930)/NT_CHAPTERS*100));}
+function fmtD(d){return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});}
+function fmtDFull(d){return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});}
+function isToday(d){return d.toDateString()===new Date().toDateString();}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+let _sb=null;
+function sb(){
+  if(!_sb)_sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
+  return _sb;
+}
+async function getUser(){
+  const{data:{session},error}=await sb().auth.getSession();
+  if(error)console.error('getSession:',error.message);
+  console.log('user:',session?.user?.email||'none');
+  return session?.user||null;
+}
+async function doLogout(){await sb().auth.signOut();window.location.href='index.html';}
+let ST={completedDays:{},completedComplements:{},currentWeek:32};
+let NT_NOTES={};
+let UID=null;
+async function dbLoad(uid){
+  UID=uid;
+  console.log('dbLoad for:',uid);
+  const{data:pd,error:pe}=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
+  if(pe)console.error('load progress:',pe.message);
+  if(pd?.data){ST={...ST,...pd.data};console.log('progress ok');}
+  else console.log('no progress yet');
+  const{data:nd,error:ne}=await sb().from('notes').select('week_number,content').eq('user_id',uid);
+  if(ne)console.error('load notes:',ne.message);
+  if(nd){nd.forEach(r=>NT_NOTES[r.week_number]=r.content);console.log('notes:',nd.length);}
+}
+async function dbSave(){
+  if(!UID){console.warn('dbSave: no UID');return false;}
+  const{error}=await sb().from('progress').upsert({user_id:UID,data:ST,updated_at:new Date().toISOString()},{onConflict:'user_id',ignoreDuplicates:false});
+  if(error){console.error('dbSave:',error.code,error.message);return false;}
+  console.log('dbSave ok');return true;
+}
+async function dbSaveNote(wk,txt){
+  if(!UID)return;
+  NT_NOTES[wk]=txt;
+  const{error}=await sb().from('notes').upsert({user_id:UID,week_number:wk,content:txt,updated_at:new Date().toISOString()},{onConflict:'user_id,week_number',ignoreDuplicates:false});
+  if(error)console.error('dbSaveNote:',error.message);
+}
+function renderPH(wk){
+  const tot=Object.values(ST.completedDays).filter(Boolean).length;
+  const wkd=Object.keys(ST.completedComplements).filter(k=>ST.completedComplements[k]).length;
+  const ch=Math.min(tot,TOTAL_CHAPTERS);
+  const pct=Math.round(ch/TOTAL_CHAPTERS*100);
+  const $=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const $w=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=v+'%';};
+  $w('pfil',pct);$('ppct',pct+'%');
+  $('swk',wkd+' / '+TOTAL_WEEKS);$('sch',ch+' / '+TOTAL_CHAPTERS);$('sst',tot);
+  $w('bat',atPct(ch));$('pat',atPct(ch)+'%');
+  $w('bnt',ntPct(ch));$('pnt',ntPct(ch)+'%');
+  if(wk!==undefined&&WEEKS_DATA){
+    const wd=WEEKS_DATA[wk];
+    if(wd){
+      const bk=getBook(wd.chaptersStart);
+      let bkCh=0;
+      Object.keys(ST.completedDays).forEach(key=>{
+        if(!ST.completedDays[key])return;
+        const[wn]=key.split('-').map(Number);
+        const d2=WEEKS_DATA[wn];if(!d2)return;
+        if(getBook(d2.chaptersStart)[3]===bk[3])bkCh++;
+      });
+      const bp=Math.min(100,Math.round(bkCh/bk[1]*100));
+      $w('bbk',bp);$('pbk',bp+'%');$('lbk',bk[0]);
+      $('bbdg',bk[0].toUpperCase());
+      $('bvt',bk[4]?'"'+bk[4]+'"':' ');$('bvr',bk[5]||'');
+    }
   }
-  return _supa;
-}
-async function getUser() {
-  const { data: { session }, error } = await supa().auth.getSession();
-  if (error) console.error('getSession error:', error.message);
-  console.log('getUser:', session?.user?.email || 'not logged in');
-  return session?.user || null;
-}
-async function doLogout() {
-  await supa().auth.signOut();
-  window.location.href = 'index.html';
-}
-let state = { completedDays: {}, completedComplements: {}, currentWeek: 32 };
-let notes = {};
-let _userId = null;
-async function loadFromSupabase(userId) {
-  _userId = userId;
-  console.log('loadFromSupabase for:', userId);
-  const { data: pd, error: pe } = await supa().from('progress').select('data').eq('user_id', userId).maybeSingle();
-  if (pe) console.error('load progress error:', pe.message);
-  if (pd?.data) { state = { ...state, ...pd.data }; console.log('progress loaded ok'); }
-  else console.log('no existing progress row — will create on first save');
-  const { data: nd, error: ne } = await supa().from('notes').select('week_number,content').eq('user_id', userId);
-  if (ne) console.error('load notes error:', ne.message);
-  if (nd) { nd.forEach(r => { notes[r.week_number] = r.content; }); console.log('notes loaded:', nd.length); }
-}
-async function saveProgress() {
-  if (!_userId) { console.warn('saveProgress: no userId'); return false; }
-  const { error } = await supa().from('progress').upsert(
-    { user_id: _userId, data: state, updated_at: new Date().toISOString() },
-    { onConflict: 'user_id', ignoreDuplicates: false }
-  );
-  if (error) { console.error('saveProgress error:', error.code, error.message); return false; }
-  console.log('saveProgress ok');
-  return true;
-}
-async function saveNote(weekNum, content) {
-  if (!_userId) return;
-  notes[weekNum] = content;
-  const { error } = await supa().from('notes').upsert(
-    { user_id: _userId, week_number: weekNum, content: content, updated_at: new Date().toISOString() },
-    { onConflict: 'user_id,week_number', ignoreDuplicates: false }
-  );
-  if (error) console.error('saveNote error:', error.message);
 }
 
-function renderNotes() {
-  const container = document.getElementById('notes-list');
-  const notedWeeks = Object.keys(notes)
-    .map(k=>parseInt(k))
-    .filter(n=>notes[n]&&notes[n].trim().length>0)
-    .sort((a,b)=>a-b);
-
-  if(notedWeeks.length===0) {
-    container.innerHTML='<div class="notes-empty">Nenhuma anotação registrada ainda.<br>As anotações feitas nas páginas das semanas aparecerão aqui.</div>';
-    return;
-  }
-  let html='';
-  notedWeeks.forEach(weekNum=>{
-    const wi=WEEKS_INDEX[weekNum-1];
-    if(!wi) return;
-    html+=`<div class="note-entry fade-in">
-      <div class="note-entry-header" onclick="window.location.href='semanas.html?week=${weekNum}'">
-        <div>
-          <div class="note-entry-week">Semana ${weekNum} · ${wi.block}</div>
-          <div class="note-entry-range">${wi.range}</div>
-          <div class="note-entry-dates">${formatDate(wi.ds)} – ${formatDate(wi.de)}</div>
-        </div>
-        <button class="note-entry-link"
-          onclick="event.stopPropagation();window.location.href='semanas.html?week=${weekNum}'">
-          Ir à semana →
-        </button>
-      </div>
-      <div class="note-entry-body">${escapeHtml(notes[weekNum])}</div>
-    </div>`;
+function renderNotes(){
+  const c=document.getElementById('nl');
+  const wks=Object.keys(NT_NOTES).map(k=>parseInt(k)).filter(n=>NT_NOTES[n]&&NT_NOTES[n].trim()).sort((a,b)=>a-b);
+  if(!wks.length){c.innerHTML='<div class="npemp">Nenhuma anotação registrada ainda.<br>As anotações das semanas aparecerão aqui.</div>';return;}
+  let h='';
+  wks.forEach(wn=>{
+    const wi=WEEKS_INDEX[wn-1];if(!wi)return;
+    h+='<div class="ne fi">'
+      +'<div class="neh" onclick="location.href='semanas.html?week='+wn+''">'
+      +'<div><div class="newk">Semana '+wn+' · '+wi.block+'</div><div class="ner">'+wi.range+'</div><div class="ned">'+fmtD(wi.ds)+' – '+fmtD(wi.de)+'</div></div>'
+      +'<button class="nel" onclick="event.stopPropagation();location.href='semanas.html?week='+wn+''">Ir à semana →</button>'
+      +'</div><div class="neb">'+esc(NT_NOTES[wn])+'</div></div>';
   });
-  container.innerHTML=html;
+  c.innerHTML=h;
 }
 
-async function init() {
+async function init(){
   const user=await getUser();
-  if(!user) { window.location.href='index.html'; return; }
-  await loadFromSupabase(user.id);
-  const em=document.getElementById('user-email');
-  if(em) em.textContent=user.email;
-  renderProgressHeader();
+  if(!user){location.href='index.html';return;}
+  await dbLoad(user.id);
+  const e=document.getElementById('uemail');if(e)e.textContent=user.email;
+  renderPH();
   renderNotes();
 }
-
 init();
-</script>
-</body>
-</html>
+</script></body></html>
