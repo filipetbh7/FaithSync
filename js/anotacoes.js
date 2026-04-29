@@ -2,6 +2,30 @@
 function renderNotes(){
   const c=document.getElementById('nl');
   const wks=Object.keys(NT_NOTES).map(k=>parseInt(k)).filter(n=>NT_NOTES[n]&&NT_NOTES[n].trim()).sort((a,b)=>a-b);
+  
+  const btnDelete = document.getElementById('btn-delete-notes');
+  if (btnDelete) {
+    if (wks.length > 0) {
+      btnDelete.removeAttribute('disabled');
+      btnDelete.onclick = async () => {
+        if (confirm("Apagar todas as anotações? Esta ação não pode ser desfeita.")) {
+          btnDelete.disabled = true;
+          const ok = await dbDeleteAllNotes();
+          if (ok) {
+            NT_NOTES = {};
+            location.reload();
+          } else {
+            if(typeof toast === 'function') toast('Erro ao apagar anotações.');
+            btnDelete.disabled = false;
+          }
+        }
+      };
+    } else {
+      btnDelete.setAttribute('disabled', 'true');
+      btnDelete.onclick = null;
+    }
+  }
+
   if(!wks.length){
     c.innerHTML='<div class="empty-state">'+
       '<p>Nenhuma anotação registrada ainda.</p>'+

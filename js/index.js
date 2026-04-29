@@ -2,6 +2,58 @@
 
 function goWeek(n){location.href="semanas.html?week="+n;}
 
+function planStartLabel(){
+  if(!ST.planStartDate)return'';
+  return 'Plano iniciado em '+new Date(ST.planStartDate).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+function updatePlanControls(){
+  const startBtn=document.getElementById('btn-start-plan');
+  const resetBtn=document.getElementById('btn-reset-plan');
+  const info=document.getElementById('plan-start-info');
+  const histBtn=document.getElementById('btn-history');
+  const hasStart=!!ST.planStartDate;
+  if(startBtn)startBtn.disabled=hasStart;
+  if(resetBtn)resetBtn.disabled=!hasStart;
+  if(info){
+    info.textContent=planStartLabel();
+    info.style.display=hasStart?'inline':'none';
+  }
+  if(histBtn){
+    const hasHistory = ST.weekCompletionHistory && Object.keys(ST.weekCompletionHistory).length > 0;
+    histBtn.style.display=hasHistory?'inline-block':'none';
+  }
+}
+
+async function startPlanToday(){
+  const btn=document.getElementById('btn-start-plan');
+  if(ST.planStartDate)return;
+  ST.planStartDate=new Date().toISOString();
+  if(btn)btn.disabled=true;
+  const ok=await dbSaveProgress();
+  if(!ok){
+    ST.planStartDate=null;
+    updatePlanControls();
+    toast('Nao foi possivel salvar o inicio do plano.');
+    return;
+  }
+  updatePlanControls();
+  renderIndex();
+}
+
+async function resetCurrentPlan(){
+  const ok=confirm('Apagar plano? Todo o progresso, histórico e dias marcados serão removidos. As anotações serão mantidas. Esta ação não pode ser desfeita.');
+  if(!ok)return;
+  ST.planStartDate=null;
+  ST.completedDays={};
+  ST.completedComplements={};
+  ST.weekCompletionHistory={};
+  ST.currentWeek=1;
+  const saved=await dbSaveProgress();
+  if(saved)location.reload();
+  else toast('Nao foi possivel apagar o plano agora.');
+}
+
 function wkStatus(wn){
   const dc=!!ST.completedComplements[wn];
   const dd=Object.keys(ST.completedDays).filter(k=>k.startsWith(wn+'-')&&ST.completedDays[k]).length;
@@ -11,26 +63,36 @@ function wkStatus(wn){
 }
 
 function renderIndex(){
+  updatePlanControls();
   const c=document.getElementById('igc');
-  const sl={none:'Não iniciado',prog:'Em andamento',done:'Concluído'};
-  let html='',cb='';
+  if(!c)return;
+  c.innerHTML='';
+  const dates = typeof calculateWeekDates === 'function' ? calculateWeekDates() || {} : {};
   WEEKS_INDEX.forEach(w=>{
-    if(w.block!==cb){cb=w.block;if(html)html+='</div>';html+='<div class="ibl">'+w.block+'</div><div class="igrd">';}
-    const s=wkStatus(w.num);
-    const sc=s==='prog'?'sp':s==='done'?'sd':'';
-    html+='<div class="wc '+(w.hasContent?'hc ':'')+sc+'" data-week="'+w.num+'">'
-      +'<div class="wch"><div class="wcn">Semana '+w.num+'</div>'
-      +'<div class="wcs"><div class="sdt '+s+'"></div><span class="sdlbl">'+sl[s]+'</span></div></div>'
-      +'<div class="wcd">'+fmtD(w.ds)+' – '+fmtD(w.de)+'</div>'
-      +'<div class="wcr">'+w.range+'</div>'
-      +'<div class="wcb">'+w.block+(w.hasContent?' · Disponível':'')+'</div>'
-      +'<div class="wca">→</div></div>';
-  });
-  if(html)html+='</div>';
-  c.innerHTML=html;
-  // Attach click handlers via event delegation
-  document.querySelectorAll('[data-week]').forEach(el=>{
-    el.addEventListener('click',()=>goWeek(el.dataset.week));
+    const d=document.createElement('div');
+    const status = wkStatus(w.num);
+    const wcClass = status === 'done' ? 'sd' : (status === 'prog' ? 'sp' : '');
+    d.className='wc ' + wcClass;
+    if(dates[w.num] && dates[w.num].delayed) d.classList.add('wc-delayed');
+    d.onclick=()=>goWeek(w.num);
+    let dateInfo = '';
+    if (dates[w.num]) {
+      const isDelayed = dates[w.num].delayed;
+      const delayedBadge = isDelayed ? '<span class="badge-delayed" style="margin-left: .5rem;">Atrasada</span>' : '';
+      dateInfo = `<div class="wcd">${fmtD(dates[w.num].dateStart)} - ${fmtD(dates[w.num].dateEnd)}${delayedBadge}</div>`;
+    }
+    d.innerHTML=`
+      <div class="wch">
+        <div class="wcn">Semana ${w.num}</div>
+        <div class="wcs">
+          <div class="sdt ${status}"></div>
+        </div>
+      </div>
+      ${dateInfo}
+      <div class="wcr">${w.block}</div>
+      <div class="wca">Ver &rarr;</div>
+    `;
+    c.appendChild(d);
   });
 }
 
@@ -89,9 +151,88 @@ async function initApp(){
   }
 }
 
+function setupModalHistory() {
+  const btn = document.getElementById('btn-history');
+  const modal = document.getElementById('modal-history');
+  const closeBtn = modal?.querySelector('.modal-close');
+  const list = document.getElementById('history-list');
+  
+  if(btn && modal && list) {
+    btn.addEventListener('click', () => {
+      list.innerHTML = '';
+      if (ST.weekCompletionHistory) {
+        const sortedKeys = Object.keys(ST.weekCompletionHistory).map(Number).sort((a,b)=>a-b);
+        if (sortedKeys.length === 0) {
+          list.innerHTML = '<div class="empty-state">Nenhuma semana concluída ainda.</div>';
+        } else {
+          sortedKeys.forEach(wk => {
+            const entry = ST.weekCompletionHistory[wk];
+            const wi = WEEKS_INDEX[wk-1];
+            const title = wi ? wi.block : 'Semana';
+            
+            const compDateObj = new Date(entry.completedAt || entry);
+            const compDateStr = fmtDFull(compDateObj);
+            const delayedBadge = entry.wasDelayed ? '<span class="badge-delayed" style="margin-left: .5rem;">Atrasada</span>' : '';
+            const daysStr = entry.daysElapsed ? `<div style="font-size: .75rem; color: var(--ts); margin-top: .2rem;">Dias até concluir: ${entry.daysElapsed}</div>` : '';
+            
+            const div = document.createElement('div');
+            div.className = 'rb';
+            div.innerHTML = `
+              <div class="rsrc">Semana ${wk} &mdash; ${title}</div>
+              <div class="rcnt">
+                <div>Concluída em: ${compDateStr}${delayedBadge}</div>
+                ${daysStr}
+              </div>
+            `;
+            list.appendChild(div);
+          });
+        }
+      }
+      modal.style.display = 'flex';
+    });
+    if(closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    }
+    modal.addEventListener('click', (e) => {
+      if(e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  }
+}
+
+// Modal Materiais
+function setupModalMaterials() {
+  const btn = document.getElementById('btn-materials');
+  const modal = document.getElementById('modal-materials');
+  const closeBtn = modal?.querySelector('.modal-close');
+  
+  if(btn && modal) {
+    btn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+    });
+    if(closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    }
+    modal.addEventListener('click', (e) => {
+      if(e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  }
+}
+
 // Boot
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('lbtn').addEventListener('click',doLogin);
   document.getElementById('lpw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.getElementById('btn-start-plan').addEventListener('click',startPlanToday);
+  document.getElementById('btn-reset-plan').addEventListener('click',resetCurrentPlan);
+  setupModalHistory();
+  setupModalMaterials();
   initApp();
 });

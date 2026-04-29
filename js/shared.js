@@ -1,4 +1,3 @@
-/* FaithSync - Shared Logic */
 const SUPABASE_URL='https://shhtdamjxoxxxsyeqhhi.supabase.co';
 const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaHRkYW1qeG94eHhzeWVxaGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzQ1OTIsImV4cCI6MjA5MjkxMDU5Mn0.9ZWxZszdUZbZppsk2VNzxzj1jJtB3soyBrswRUFdaIk';
 const TOTAL_CHAPTERS=1189,AT_CHAPTERS=929,NT_CHAPTERS=260,TOTAL_WEEKS=87;
@@ -164,79 +163,92 @@ const WEEKS_INDEX = [
 function getBook(n){for(let i=BOOKS.length-1;i>=0;i--)if(n>=BOOKS[i][3])return BOOKS[i];return BOOKS[0];}
 function atPct(n){return Math.min(100,Math.round(Math.max(0,n-1)/AT_CHAPTERS*100));}
 function ntPct(n){if(n<930)return 0;return Math.min(100,Math.round((n-930)/NT_CHAPTERS*100));}
+
 function fmtD(d){return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});}
 function fmtDFull(d){return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});}
 function isToday(d){return d.toDateString()===new Date().toDateString();}
 function esc(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function toast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 
-let _sb=null;
-function sb(){
-  if(!_sb)_sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}});
-  return _sb;
-}
-async function getUser(){
-  try{
-    const r=await sb().auth.getSession();
-    if(r.error){
-      console.error('getSession:',r.error.message);
-      window.location.href='index.html?err=session';
-      return null;
-    }
-    if(!r.data.session){
-      window.location.href='index.html?err=session';
-      return null;
-    }
-    return r.data.session.user;
-  }catch(err){
-    console.error('getSession:',err);
-    window.location.href='index.html?err=session';
-    return null;
-  }
-}
-async function doLogout(){await sb().auth.signOut();window.location.href='index.html';}
-
-let ST={completedDays:{},completedComplements:{},currentWeek:32};
+let ST={completedDays:{},completedComplements:{},currentWeek:32,weekCompletionHistory:{}};
 let NT_NOTES={};
 let UID=null;
+function getUID(){return UID;}
 
-async function dbLoad(uid){
-  UID=uid;
-  let ok=true;
-  try{
-    const r1=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
-    if(r1.error){
-      console.error('load progress:',r1.error.message);
-      ok=false;
-    }else if(r1.data&&r1.data.data){
-      ST=Object.assign({},ST,r1.data.data);
-    }
-    const r2=await sb().from('notes').select('week_number,content').eq('user_id',uid);
-    if(r2.error){
-      console.error('load notes:',r2.error.message);
-      ok=false;
-    }else if(r2.data){
-      r2.data.forEach(r=>NT_NOTES[r.week_number]=r.content);
-    }
-  }catch(err){
-    console.error('dbLoad:',err);
-    ok=false;
+function nextSunday(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  if (day !== 0) {
+    d.setDate(d.getDate() + (7 - day));
   }
-  if(!ok)toast('Erro ao carregar dados. Verifique sua conexao.');
-  return ok;
+  return d;
 }
-async function dbSave(){
-  if(!UID)return false;
-  const r=await sb().from('progress').upsert({user_id:UID,data:ST,updated_at:new Date().toISOString()},{onConflict:'user_id',ignoreDuplicates:false});
-  if(r.error){console.error('dbSave:',r.error.message);return false;}
-  return true;
+
+function calculateWeekDates() {
+  if (!ST.planStartDate) return null;
+  const dates = {};
+  
+  let currentStart = nextSunday(new Date(ST.planStartDate));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (!ST.weekCompletionHistory) ST.weekCompletionHistory = {};
+
+  for (let w = 1; w <= TOTAL_WEEKS; w++) {
+    const dStart = new Date(currentStart);
+    const dEnd = new Date(currentStart);
+    dEnd.setDate(dEnd.getDate() + 6);
+    
+    let delayed = false;
+    if (w === ST.currentWeek) {
+      const isDay0Marked = !!ST.completedDays[w + '-0'];
+      if (!isDay0Marked && today > dStart) {
+        delayed = true;
+      }
+    }
+    
+    dates[w] = { dateStart: dStart, dateEnd: dEnd, delayed: delayed };
+    
+    if (ST.weekCompletionHistory[w]) {
+       let compDate = ST.weekCompletionHistory[w].completedAt || ST.weekCompletionHistory[w];
+       currentStart = nextSunday(new Date(compDate));
+    } else {
+       currentStart = new Date(currentStart);
+       currentStart.setDate(currentStart.getDate() + 7);
+    }
+  }
+  return dates;
 }
-async function dbSaveNote(wk,txt){
-  if(!UID)return;
-  NT_NOTES[wk]=txt;
-  const r=await sb().from('notes').upsert({user_id:UID,week_number:wk,content:txt,updated_at:new Date().toISOString()},{onConflict:'user_id,week_number',ignoreDuplicates:false});
-  if(r.error)console.error('dbSaveNote:',r.error.message);
+
+function checkWeekCompletion(wn) {
+  let daysCompleted = 0;
+  for (let i = 0; i < 6; i++) {
+    if (ST.completedDays[wn + '-' + i]) daysCompleted++;
+  }
+  const compCompleted = !!ST.completedComplements[wn];
+  const isCompleted = (daysCompleted === 6 && compCompleted);
+  
+  if (!ST.weekCompletionHistory) ST.weekCompletionHistory = {};
+  
+  if (isCompleted && !ST.weekCompletionHistory[wn]) {
+    const weekDates = calculateWeekDates();
+    let daysElapsed = 0;
+    let wasDelayed = false;
+    if (weekDates && weekDates[wn]) {
+      daysElapsed = Math.round((new Date() - new Date(weekDates[wn].dateStart)) / 86400000);
+      wasDelayed = weekDates[wn].delayed;
+    }
+    ST.weekCompletionHistory[wn] = {
+      completedAt: new Date().toISOString(),
+      daysElapsed: daysElapsed,
+      wasDelayed: wasDelayed
+    };
+  } else if (!isCompleted && ST.weekCompletionHistory[wn]) {
+    delete ST.weekCompletionHistory[wn];
+  }
 }
+
 
 function renderPH(wk){
   const tot=Object.values(ST.completedDays).filter(Boolean).length;
@@ -244,13 +256,63 @@ function renderPH(wk){
   const ch=Math.min(tot,TOTAL_CHAPTERS);
   const pct=Math.round(ch/TOTAL_CHAPTERS*100);
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  const setW=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=v+'%';};
+  const setW=(id,v)=>{const e=document.getElementById(id);if(e){e.style.width=v+'%';if(e.getAttribute('role')==='progressbar')e.setAttribute('aria-valuenow',Math.round(v));}};
+  
   setW('pfil',pct);set('ppct',pct+'%');
   set('swk',wkd+' / '+TOTAL_WEEKS);
   set('sch',ch+' / '+TOTAL_CHAPTERS);
   set('sst',tot);
-  setW('bat',atPct(ch));set('pat',atPct(ch)+'%');
-  setW('bnt',ntPct(ch));set('pnt',ntPct(ch)+'%');
+
+  let atCompleted = 0;
+  let ntCompleted = 0;
+  if (ST.completedDays) {
+    Object.keys(ST.completedDays).forEach(key => {
+      if (!ST.completedDays[key]) return;
+      const parts = key.split('-');
+      const s = parseInt(parts[0]);
+      const d = parseInt(parts[1]);
+      let chNum = null;
+      if (typeof WEEKS_DATA !== 'undefined' && WEEKS_DATA[s]) {
+        const wd = WEEKS_DATA[s];
+        if (wd.days && wd.days[d] && wd.days[d].reading) {
+          const reading = wd.days[d].reading;
+          const bk = BOOKS.find(b => reading.startsWith(b[0]));
+          if (bk) {
+            const rest = reading.substring(bk[0].length).trim();
+            const match = rest.match(/\d+/);
+            if (match) chNum = bk[3] + parseInt(match[0]) - 1;
+            else chNum = bk[3];
+          }
+        }
+        if (chNum === null && wd.chaptersStart !== undefined) {
+          chNum = wd.chaptersStart + d;
+          if (wd.chaptersEnd !== undefined) chNum = Math.min(wd.chaptersEnd, chNum);
+        }
+      }
+      if (chNum === null && typeof WEEKS_INDEX !== 'undefined') {
+        const wi = WEEKS_INDEX.find(w => w.num === s);
+        if (wi && wi.chaptersStart !== undefined) {
+          chNum = wi.chaptersStart + d;
+          if (wi.chaptersEnd !== undefined) chNum = Math.min(wi.chaptersEnd, chNum);
+        }
+      }
+      if (chNum !== null) {
+        const book = getBook(chNum);
+        if (book[2] === "AT") atCompleted++;
+        else if (book[2] === "NT") ntCompleted++;
+      } else {
+        if (s >= 66) ntCompleted++;
+        else atCompleted++;
+      }
+    });
+  }
+  const patVal = Math.min(100, Math.round(atCompleted / AT_CHAPTERS * 100));
+  const pntVal = Math.min(100, Math.round(ntCompleted / NT_CHAPTERS * 100));
+  const patWidth = Math.min(100, atCompleted / AT_CHAPTERS * 100);
+  const pntWidth = Math.min(100, ntCompleted / NT_CHAPTERS * 100);
+  setW('bat', patWidth); set('pat', patVal + '%');
+  setW('bnt', pntWidth); set('pnt', pntVal + '%');
+
   if(wk!==undefined&&typeof WEEKS_DATA!=='undefined'){
     const wd=WEEKS_DATA[wk];
     if(wd){

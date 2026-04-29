@@ -39,7 +39,23 @@ function renderWeekHeader(wn,wi){
   document.getElementById('btnN').disabled=wn>=TOTAL_WEEKS;
   document.getElementById('wknum').textContent='Semana '+wn;
   document.getElementById('wkttl').textContent=(WEEKS_DATA[wn]&&WEEKS_DATA[wn].title)||'Semana '+wn;
-  document.getElementById('wksub').textContent=fmtD(wi.ds)+' - '+fmtD(wi.de)+' | '+wi.range;
+  
+  const weekDates = calculateWeekDates();
+  let subText = wi.range;
+  if (weekDates && weekDates[wn]) {
+    subText = fmtD(weekDates[wn].dateStart) + ' - ' + fmtD(weekDates[wn].dateEnd) + ' | ' + wi.range;
+  }
+  document.getElementById('wksub').textContent=subText;
+  
+  const bannerContainer = document.getElementById('delay-banner-container');
+  if (bannerContainer) {
+    if (weekDates && weekDates[wn] && weekDates[wn].delayed) {
+      bannerContainer.innerHTML = '<div class="delay-banner">⚠ Semana em atraso — marque o domingo quando possível</div>';
+    } else {
+      bannerContainer.innerHTML = '';
+    }
+  }
+  
   renderPH(wn);
 }
 
@@ -56,12 +72,20 @@ function renderDays(wk){
   let h='';
   h+='<div class="sh">Leitura Di&aacute;ria | 15 minutos por dia</div>';
   h+='<div class="dgrd">';
+  const weekDates = calculateWeekDates();
   wk.days.forEach((day,i)=>{
     const key=CW+'-'+i;
     const ck=!!ST.completedDays[key];
-    const td=isToday(day.date);
+    
+    let actualDate = null;
+    if (weekDates && weekDates[CW]) {
+      actualDate = new Date(weekDates[CW].dateStart);
+      actualDate.setDate(actualDate.getDate() + i);
+    }
+    
+    const td=actualDate ? isToday(actualDate) : false;
     h+='<div class="dc'+(ck?' ck':'')+(td?' td':'')+'" data-key="'+key+'">';
-    h+='<div class="dch"><div><div class="dlbl">'+esc(day.dayOfWeek)+'</div><div class="ddt">'+fmtD(day.date)+'</div></div>';
+    h+='<div class="dch"><div><div class="dlbl">'+esc(day.dayOfWeek)+'</div><div class="ddt">'+(actualDate?fmtD(actualDate):'')+'</div></div>';
     h+='<div class="dchk'+(ck?' ck':'')+'" data-key="'+key+'"></div></div>';
     h+='<div class="dr">'+esc(day.reading)+(day.verses?' <span style="color:var(--td);font-size:.82em">'+esc(day.verses)+'</span>':'')+'</div>';
     h+='<div class="dctx">'+esc(day.context)+'</div>';
@@ -82,9 +106,16 @@ function renderVisual(wk){
 function renderComplement(wk){
   let h='';
   const cd=!!ST.completedComplements[CW];
-  h+='<div class="sh">Complementa&ccedil;&atilde;o Semanal | ~1 hora | '+fmtD(wk.complement.date)+'</div>';
+  const weekDates = calculateWeekDates();
+  let compDate = null;
+  if (weekDates && weekDates[CW]) {
+    compDate = new Date(weekDates[CW].dateStart);
+    compDate.setDate(compDate.getDate() + 6);
+  }
+  
+  h+='<div class="sh">Complementa&ccedil;&atilde;o Semanal | ~1 hora' + (compDate ? ' | '+fmtD(compDate) : '') + '</div>';
   h+='<div class="ccard"><div class="cchdr"><div class="cttl">Estudo Complementar - '+esc(wk.title)+'</div>';
-  h+='<div style="display:flex;align-items:center;gap:.7rem"><div class="cdt">'+fmtDFull(wk.complement.date)+'</div>';
+  h+='<div style="display:flex;align-items:center;gap:.7rem"><div class="cdt">'+(compDate?fmtDFull(compDate):'')+'</div>';
   h+='<div class="dchk'+(cd?' ck':'')+'" data-comp="'+CW+'"></div></div></div>';
   h+='<p class="cintro">'+esc(wk.complement.intro)+'</p><div class="rgrd">';
   wk.complement.resources.forEach(r=>{
@@ -154,6 +185,8 @@ let _nt=null,_np=null;
 
 async function togDay(key){
   ST.completedDays[key]=!ST.completedDays[key];
+  const wn = parseInt(key.split('-')[0]);
+  checkWeekCompletion(wn);
   renderWk(CW);
   const ok=await dbSave();
   toast(ok?(ST.completedDays[key]?'Leitura marcada':'Marcacao removida'):'Erro - use botao Salvar');
@@ -161,6 +194,7 @@ async function togDay(key){
 
 async function togComp(wn){
   ST.completedComplements[wn]=!ST.completedComplements[wn];
+  checkWeekCompletion(wn);
   renderWk(wn);
   const ok=await dbSave();
   toast(ok?(ST.completedComplements[wn]?'Complementacao concluida':'Marcacao removida'):'Erro - use botao Salvar');
@@ -270,6 +304,7 @@ function doReset(){
       WEEKS_DATA[CW].days.forEach((_,i)=>{delete ST.completedDays[CW+'-'+i];});
     }
     delete ST.completedComplements[CW];
+    if(ST.weekCompletionHistory) delete ST.weekCompletionHistory[CW];
     dbSave();renderWk(CW);
     toast('Semana reiniciada');
   }

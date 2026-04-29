@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="mobile-web-app-capable" content="yes">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="mobile-web-app-capable" content="yes">
 <title>FaithSync</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="alternate icon" href="favicon.ico">
 <link rel="manifest" href="/FaithSync/manifest.json">
@@ -24,17 +24,52 @@
   </div>
 </div>
 <div class="iscr" id="iscr">
-  <header class="hdr"><div class="hdrorn">✦ FaithSync ✦</div><h1 class="hdrttl">Plano de Leitura Bíblica</h1><p class="hdrsub">Estudo em Família · Gênesis ao Apocalipse</p></header><div class="tnav"><button class="tbtn act" onclick="location.href='index.html'">≡ Índice</button><span class="tsep">·</span><button class="tbtn" onclick="location.href='semanas.html'">📖 Semanas</button><span class="tsep">·</span><button class="tbtn" onclick="location.href='anotacoes.html'">✎ Anotações</button><span class="tsep">·</span><span class="uinf" id="uemail"></span><button class="lout" onclick="doLogout()">sair</button></div>
-  <div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil" style="width:0%"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas concluídas</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Capítulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Antigo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" style="width:0%"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 capítulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" style="width:0%"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 capítulos</div></div></div></div>
+  <header class="hdr"><div class="hdrorn">✦ FaithSync ✦</div><h1 class="hdrttl">Plano de Leitura Bíblica</h1><p class="hdrsub">Estudo em Família · Gênesis ao Apocalipse</p></header><div class="tnav"><button class="tbtn act" onclick="location.href='index.html'">≡ Índice</button><span class="tsep">·</span><button class="tbtn" onclick="location.href='semanas.html'">📖 Semanas</button><span class="tsep">·</span><button class="tbtn" onclick="location.href='anotacoes.html'">✎ Anotações</button><span class="tsep">·</span><span class="uinf" id="uemail"></span><button class="lout" onclick="doLogout()" aria-label="Sair da conta">sair</button></div>
+  <div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil" style="width:0%"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas concluídas</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Capítulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Antigo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso Antigo Testamento"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 capítulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso Novo Testamento"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 capítulos</div></div></div></div>
+  <div class="plan-controls">
+    <button id="btn-start-plan" class="btn-plan">Iniciar Plano Hoje</button>
+    <span id="plan-start-info" style="display:none"></span>
+    <button id="btn-history" class="btn-text" style="display:none; margin-left:.5rem;">📅 Histórico</button>
+    <button id="btn-reset-plan" class="btn-plan btn-danger" disabled>Apagar Plano Atual</button>
+  </div>
   <div class="iintro">
     <div class="iitxt">87 semanas · Dom a Sex leitura · Sáb complementação</div>
     <div class="leg"><div class="li"><div class="ld none"></div>Não iniciado</div><div class="li"><div class="ld prog"></div>Em andamento</div><div class="li"><div class="ld done"></div>Concluído</div></div>
   </div>
   <div id="igc"></div>
+  <div style="text-align:center; padding: 1rem 0;">
+    <button id="btn-materials" class="btn-text">📚 Materiais de Estudo</button>
+  </div>
+  <div id="modal-history" class="modal" style="display:none">
+    <div class="modal-content">
+      <button class="modal-close" aria-label="Fechar">✕</button>
+      <h2>Histórico de Semanas Concluídas</h2>
+      <div id="history-list" class="rgrd" style="max-height: 50vh; overflow-y: auto;">
+      </div>
+    </div>
+  </div>
+  <div id="modal-materials" class="modal" style="display:none">
+    <div class="modal-content">
+      <button class="modal-close" aria-label="Fechar">✕</button>
+      <h2>Materiais de Estudo</h2>
+      <ol>
+        <li>Bíblia Thompson — Editora Vida, 2024</li>
+        <li>Bíblia Scofield — Editora Vida, 2020</li>
+        <li>Bíblia Judaica Completa — Editora Vida, 2011</li>
+        <li>Dicionário Bíblico Crescer — Geográfica Editora, 2010</li>
+        <li>Enciclopédia da vida dos personagens bíblicos — Matheus Soares, 3ª ed., 2018</li>
+        <li>Manual de Escatologia — J. Dwight Pentecost — Editora Vida, 2024</li>
+        <li>Enciclopédia popular de profecia bíblica — Tim LaHaye — CPAD, 2024</li>
+        <li>Charting the End Times — Tim LaHaye, Thomas Ice — Harvest, 2021</li>
+        <li>Atlas Ilustrado da Bíblia — André Daniel Reinke — Thomas Nelson, 3ª ed., 2024</li>
+        <li>Zondervan Atlas of the Bible — Carl G. Rasmussen, Revised Edition, 2010</li>
+      </ol>
+    </div>
+  </div>
   <footer>FaithSync · Sincronizando a fé em família</footer>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
 <script src="js/shared.js"></script>
+<script src="js/db.js"></script>
 <script src="js/index.js"></script>
-</body>
 </html>
