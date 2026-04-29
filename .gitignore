@@ -1,0 +1,35 @@
+# Ambiente local
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Node.js (caso tooling seja adicionado)
+node_modules/
+npm-debug.log*
+yarn-error.log
+
+# Build e dist
+dist/
+build/
+.cache/
+
+# Logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.bak
+*~

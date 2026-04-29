@@ -1,3 +1,4 @@
+// Conteúdo completo disponível: semana 32 (Daniel 7-12). Demais semanas em js/content/ quando geradas.
 /* FaithSync - Semanas Data - Generated content */
 /* FaithSync - Semanas Data - Generated content, do not edit manually */
 const WEEKS_DATA = {

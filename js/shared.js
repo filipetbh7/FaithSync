@@ -188,14 +188,12 @@ let UID=null;
 
 async function dbLoad(uid){
   UID=uid;
-  console.log('dbLoad for:',uid);
   const r1=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
   if(r1.error)console.error('load progress:',r1.error.message);
-  if(r1.data&&r1.data.data){ST=Object.assign({},ST,r1.data.data);console.log('progress loaded');}
-  else console.log('no progress yet');
+  if(r1.data&&r1.data.data){ST=Object.assign({},ST,r1.data.data);}
   const r2=await sb().from('notes').select('week_number,content').eq('user_id',uid);
   if(r2.error)console.error('load notes:',r2.error.message);
-  if(r2.data){r2.data.forEach(r=>NT_NOTES[r.week_number]=r.content);console.log('notes:',r2.data.length);}
+  if(r2.data){r2.data.forEach(r=>NT_NOTES[r.week_number]=r.content);}
 }
 async function dbSave(){
   if(!UID)return false;
