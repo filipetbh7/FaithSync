@@ -1,14 +1,15 @@
-// js/db.js – Database access layer
+import { planState, weekNotes, setCurrentUserId, getCurrentUserId, resetState } from './state.js';
+import { SUPABASE_URL, SUPABASE_ANON } from './const.js';
 
-function sb() {
+export function sb() {
   if (!window._supabase) {
-    window._supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   }
   return window._supabase;
 }
 
 // Get current user session
-async function getUser() {
+export async function getUser() {
   const { data: { session } } = await sb().auth.getSession();
   if (!session) {
     window.location.href = 'index.html?err=session';
@@ -18,8 +19,8 @@ async function getUser() {
 }
 
 // Load all progress & notes for the current user
-async function dbLoad(uid) {
-  if (uid) currentUserId = uid; // Set global currentUserId from argument if provided
+export async function dbLoad(uid) {
+  if (uid) setCurrentUserId(uid);
   const id = getCurrentUserId();
   if (!id) return false;
 
@@ -50,7 +51,7 @@ async function dbLoad(uid) {
     if (notesError) throw notesError;
 
     // Reset notes before loading
-    weekNotes = {};
+    for (const key in weekNotes) delete weekNotes[key];
     if (notesData) {
       notesData.forEach(row => {
         weekNotes[row.week_number] = row.content;
@@ -65,7 +66,7 @@ async function dbLoad(uid) {
 }
 
 // Save progress
-async function dbSave() {
+export async function dbSave() {
   const id = getCurrentUserId();
   if (!id) return false;
 
@@ -89,12 +90,12 @@ async function dbSave() {
   }
 }
 
-async function dbSaveProgress() {
+export async function dbSaveProgress() {
   return dbSave();
 }
 
 // Save or update a weekly note
-async function dbSaveNote(weekNumber, text) {
+export async function dbSaveNote(weekNumber, text) {
   const id = getCurrentUserId();
   if (!id) return false;
 
@@ -121,7 +122,7 @@ async function dbSaveNote(weekNumber, text) {
 }
 
 // Delete all notes for current user
-async function dbDeleteAllNotes() {
+export async function dbDeleteAllNotes() {
   const id = getCurrentUserId();
   if (!id) return false;
 
@@ -132,7 +133,7 @@ async function dbDeleteAllNotes() {
       .eq('user_id', id);
 
     if (error) throw error;
-    weekNotes = {}; // Clear local state
+    for (const key in weekNotes) delete weekNotes[key]; // Clear local state
     return true;
   } catch (e) {
     console.error('dbDeleteAllNotes error:', e);
@@ -141,7 +142,8 @@ async function dbDeleteAllNotes() {
 }
 
 // Logout
-async function doLogout() {
+export async function doLogout() {
   await sb().auth.signOut();
+  resetState();
   window.location.href = 'index.html';
 }

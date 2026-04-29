@@ -34,12 +34,17 @@ FaithSync/
 ├── docs/                 
 │   └── FAITHSYNC_PLAN.md # Fonte de verdade (ESTE ARQUIVO)
 └── js/                   
-    ├── shared.js         # Constantes, utils e state global (ST)
-    ├── db.js             # Única camada de acesso ao banco e Auth
-    ├── index.js          # Lógica da index.html
-    ├── semanas-logic.js  # Lógica da semanas.html
-    ├── semanas.js        # Conteúdo estruturado (WEEKS_DATA e index)
-    ├── anotacoes.js      # Lógica da anotacoes.html
+    ├── const.js          # Constantes e arrays estáticos
+    ├── state.js          # Estado global e funções de acesso
+    ├── domain.js         # Lógica de negócio do plano
+    ├── utils.js          # Utilitários puros
+    ├── ui.js             # Funções de UI e shell compartilhado
+    ├── db.js             # Única camada de acesso ao banco e Auth (módulo)
+    ├── semanas.js        # Conteúdo estruturado (WEEKS_DATA)
+    ├── pages/
+    │   ├── index.js      # Entrypoint da index.html
+    │   ├── semanas.js    # Entrypoint da semanas.html
+    │   └── anotacoes.js  # Entrypoint da anotacoes.html
     └── content/          # Conteúdo dividido por livro (ex: genesis.js)
 ```
 **Regras de estrutura:** HTMLs obrigatoriamente na raiz, JS em `js/`, CSS em `css/`, assets em `assets/`, documentação em `docs/` e o conteúdo gerado em `js/content/[livro].js`.
@@ -89,7 +94,7 @@ Qualquer contribuição ou refatoração DEVE respeitar estas regras inegociáve
 - **Validação:** SEMPRE validar o schema em `doImport()` com as funções de validação locais antes de aplicar qualquer dado modificado no objeto global `ST`.
 - **Encapsulamento de ID:** SEMPRE usar `getUID()` do `db.js` para acessar o UUID do usuário atual logado, não o objeto de sessão bruto no meio das funções de UI.
 - **Nomenclatura de Código:** Uso de camelCase para variáveis/funções em JS. Comentários explicando REGRAS DE NEGÓCIO devem ser escritos em **Português (BR)**.
-- **Arquitetura Pura:** Sem módulos ES6 (`type="module"` ou exports/imports) para evitar CORS em ambiente local de duplo-clique. Sem uso de npm, build step (webpack/vite) ou frameworks (React/Vue).
+- **Arquitetura Pura:** ES6 modules nativos (import/export em todos os arquivos JS); Supabase via window.supabase. Sem uso de npm, build step (webpack/vite) ou frameworks (React/Vue).
 
 ## 7. Estado Atual do Projeto (2026-04-29)
 **Fases e Requisitos Concluídos:**
@@ -102,10 +107,10 @@ Qualquer contribuição ou refatoração DEVE respeitar estas regras inegociáve
 - *Nenhuma funcionalidade bloqueante no momento.*
 
 **Backlog de Qualidade (Agendado — Não Iniciado):**
-- **E:** Renomear variáveis globais para legibilidade (`ST` → `planState`, `NT_NOTES` → `weekNotes`, `UID` → `currentUserId`).
-- **F:** Remover `<style>` inline (como `display:none`) que representam estado inicial do DOM, substituindo-os por uso de classes CSS puras.
-- **G:** Componentizar header, nav e progress indicators extraindo renderização do HTML e colocando em um script JS compartilhado (eliminar duplicação entre `index.html`, `semanas.html` e `anotacoes.html`).
-- **H:** Clean Architecture — separar `js/state/app-state.js` e `js/domain/plan-domain.js` (depende das refatorações E e G acima).
+- **E:** Renomear variáveis globais para legibilidade (`ST` → `planState`, `NT_NOTES` → `weekNotes`, `UID` → `currentUserId`). (Concluído)
+- **F:** Remover `<style>` inline (como `display:none`) que representam estado inicial do DOM, substituindo-os por uso de classes CSS puras. (Concluído)
+- **G:** Componentizar header, nav e progress indicators extraindo renderização do HTML e colocando em um script JS compartilhado (Concluído em js/ui.js).
+- **H:** Clean Architecture — separar regras de negócio e ui. (Concluído: migração para ES6 modules nativos implementada).
 
 ## 8. Backlog de Funcionalidades
 Status das fases da trilha 3A–3I:
