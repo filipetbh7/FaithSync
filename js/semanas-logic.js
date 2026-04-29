@@ -10,8 +10,6 @@ function navWk(d){
   const n=CW+d;
   if(n<1||n>TOTAL_WEEKS)return;
   CW=n;
-  ST.currentWeek=n;
-  dbSave();
   history.replaceState(null,'','semanas.html?week='+n);
   renderWk(n);
   window.scrollTo({top:0,behavior:'smooth'});

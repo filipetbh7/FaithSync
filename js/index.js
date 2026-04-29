@@ -230,6 +230,7 @@ function setupModalMaterials() {
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('lbtn').addEventListener('click',doLogin);
   document.getElementById('lpw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  const lfrm=document.getElementById('lfrm');if(lfrm)lfrm.addEventListener('submit',e=>{e.preventDefault();doLogin();});
   document.getElementById('btn-start-plan').addEventListener('click',startPlanToday);
   document.getElementById('btn-reset-plan').addEventListener('click',resetCurrentPlan);
   setupModalHistory();

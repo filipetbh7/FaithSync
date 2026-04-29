@@ -244,6 +244,9 @@ function checkWeekCompletion(wn) {
       daysElapsed: daysElapsed,
       wasDelayed: wasDelayed
     };
+    if (ST.currentWeek === wn) {
+      ST.currentWeek = Math.min(wn + 1, TOTAL_WEEKS);
+    }
   } else if (!isCompleted && ST.weekCompletionHistory[wn]) {
     delete ST.weekCompletionHistory[wn];
   }
