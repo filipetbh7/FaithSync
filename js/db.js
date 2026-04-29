@@ -19,8 +19,8 @@ async function getUser() {
 
 // Load all progress & notes for the current user
 async function dbLoad(uid) {
-  if (uid) UID = uid; // Set global UID from argument if provided
-  const id = getUID();
+  if (uid) currentUserId = uid; // Set global currentUserId from argument if provided
+  const id = getCurrentUserId();
   if (!id) return false;
 
   try {
@@ -34,11 +34,11 @@ async function dbLoad(uid) {
     if (progError) throw progError;
 
     if (progData && progData.data) {
-      ST.completedDays = progData.data.completedDays || {};
-      ST.completedComplements = progData.data.completedComplements || {};
-      ST.weekCompletionHistory = progData.data.weekCompletionHistory || {};
-      ST.currentWeek = progData.data.currentWeek || 32;
-      ST.planStartDate = progData.data.planStartDate || null;
+      planState.completedDays = progData.data.completedDays || {};
+      planState.completedComplements = progData.data.completedComplements || {};
+      planState.weekCompletionHistory = progData.data.weekCompletionHistory || {};
+      planState.currentWeek = progData.data.currentWeek || 32;
+      planState.planStartDate = progData.data.planStartDate || null;
     }
 
     // 2. Load Notes
@@ -50,10 +50,10 @@ async function dbLoad(uid) {
     if (notesError) throw notesError;
 
     // Reset notes before loading
-    NT_NOTES = {};
+    weekNotes = {};
     if (notesData) {
       notesData.forEach(row => {
-        NT_NOTES[row.week_number] = row.content;
+        weekNotes[row.week_number] = row.content;
       });
     }
 
@@ -66,13 +66,13 @@ async function dbLoad(uid) {
 
 // Save progress
 async function dbSave() {
-  const id = getUID();
+  const id = getCurrentUserId();
   if (!id) return false;
 
   try {
     const progressData = {
-      ...ST,
-      planStartDate: ST.planStartDate || null
+      ...planState,
+      planStartDate: planState.planStartDate || null
     };
     const { error } = await sb()
       .from('progress')
@@ -95,7 +95,7 @@ async function dbSaveProgress() {
 
 // Save or update a weekly note
 async function dbSaveNote(weekNumber, text) {
-  const id = getUID();
+  const id = getCurrentUserId();
   if (!id) return false;
 
   try {
@@ -112,7 +112,7 @@ async function dbSaveNote(weekNumber, text) {
       );
 
     if (error) throw error;
-    NT_NOTES[weekNumber] = text; // Update local state
+    weekNotes[weekNumber] = text; // Update local state
     return true;
   } catch (e) {
     console.error('dbSaveNote error:', e);
@@ -122,7 +122,7 @@ async function dbSaveNote(weekNumber, text) {
 
 // Delete all notes for current user
 async function dbDeleteAllNotes() {
-  const id = getUID();
+  const id = getCurrentUserId();
   if (!id) return false;
 
   try {
@@ -132,7 +132,7 @@ async function dbDeleteAllNotes() {
       .eq('user_id', id);
 
     if (error) throw error;
-    NT_NOTES = {}; // Clear local state
+    weekNotes = {}; // Clear local state
     return true;
   } catch (e) {
     console.error('dbDeleteAllNotes error:', e);

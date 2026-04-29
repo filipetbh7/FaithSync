@@ -13,7 +13,7 @@
 </head>
 <body>
 <div class="spinner" id="spinner"></div>
-<div class="lscr" id="lscr" style="display:none">
+<div class="lscr hidden" id="lscr">
   <img src="assets/faithsync-logo.jpg" alt="FaithSync" class="llogo">
   <div class="lcard">
     <div class="lttl">Acesso Familiar</div>
@@ -23,13 +23,13 @@
     <div class="lerr" id="lerr"></div>
   </div>
 </div>
-<main class="iscr" id="iscr">
+<main class="iscr hidden" id="iscr">
   <header class="hdr"><div class="hdrorn">✦ FaithSync ✦</div><h1 class="hdrttl">Plano de Leitura Bíblica</h1><p class="hdrsub">Estudo em Família · Gênesis ao Apocalipse</p></header><nav class="tnav" aria-label="Navegação principal"><button class="tbtn act" data-nav="index.html" aria-label="Ir para o Índice">≡ Índice</button><span class="tsep">·</span><button class="tbtn" data-nav="semanas.html" aria-label="Ir para Semanas">📖 Semanas</button><span class="tsep">·</span><button class="tbtn" data-nav="anotacoes.html" aria-label="Ir para Anotações">✎ Anotações</button><span class="tsep">·</span><span class="uinf" id="uemail"></span><button class="lout" id="btnLogout" aria-label="Sair da conta">sair</button></nav>
-  <div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil" style="width:0%"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas concluídas</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Capítulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Antigo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso Antigo Testamento"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 capítulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso Novo Testamento"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 capítulos</div></div></div></div>
+  <div class="psec"><div class="plbl"><span>Progresso Geral</span><span id="ppct">0%</span></div><div class="ptrk"><div class="pfil" id="pfil"></div></div><div class="psts"><div class="si"><span class="sv" id="swk">0 / 87</span><span class="sl">Semanas concluídas</span></div><div class="si"><span class="sv" id="sch">0 / 1189</span><span class="sl">Capítulos lidos</span></div><div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div></div><div class="sdiv"></div><div class="psts2"><div class="si2"><div class="sl2">Antigo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf fb" id="bat" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso Antigo Testamento"></div></div><span class="spct" id="pat">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 capítulos</div></div><div class="si2"><div class="sl2">Novo Testamento</div><div class="sbw"><div class="sbm"><div class="sbf ft" id="bnt" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso Novo Testamento"></div></div><span class="spct" id="pnt">0%</span></div><div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 capítulos</div></div></div></div>
   <div class="plan-controls">
     <button id="btn-start-plan" class="btn-plan">Iniciar Plano Hoje</button>
-    <span id="plan-start-info" style="display:none"></span>
-    <button id="btn-history" class="btn-text" style="display:none; margin-left:.5rem;">📅 Histórico</button>
+    <span id="plan-start-info" class="hidden"></span>
+    <button id="btn-history" class="btn-text hidden" style="margin-left:.5rem;">📅 Histórico</button>
     <button id="btn-reset-plan" class="btn-plan btn-danger" disabled>Apagar Plano Atual</button>
   </div>
   <div class="iintro">
@@ -40,7 +40,7 @@
   <div style="text-align:center; padding: 1rem 0;">
     <button id="btn-materials" class="btn-text">📚 Materiais de Estudo</button>
   </div>
-  <div id="modal-history" class="modal" style="display:none">
+  <div id="modal-history" class="modal hidden">
     <div class="modal-content">
       <button class="modal-close" aria-label="Fechar">✕</button>
       <h2>Histórico de Semanas Concluídas</h2>
@@ -48,7 +48,7 @@
       </div>
     </div>
   </div>
-  <div id="modal-materials" class="modal" style="display:none">
+  <div id="modal-materials" class="modal hidden">
     <div class="modal-content">
       <button class="modal-close" aria-label="Fechar">✕</button>
       <h2>Materiais de Estudo</h2>

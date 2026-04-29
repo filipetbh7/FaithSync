@@ -1,7 +1,7 @@
 /* FaithSync - anotacoes Page Logic */
 function renderNotes(){
   const c=document.getElementById('nl');
-  const wks=Object.keys(NT_NOTES).map(k=>parseInt(k)).filter(n=>NT_NOTES[n]&&NT_NOTES[n].trim()).sort((a,b)=>a-b);
+  const wks=Object.keys(weekNotes).map(k=>parseInt(k)).filter(n=>weekNotes[n]&&weekNotes[n].trim()).sort((a,b)=>a-b);
   
   const btnDelete = document.getElementById('btn-delete-notes');
   if (btnDelete) {
@@ -12,7 +12,7 @@ function renderNotes(){
           btnDelete.disabled = true;
           const ok = await dbDeleteAllNotes();
           if (ok) {
-            NT_NOTES = {};
+            weekNotes = {};
             location.reload();
           } else {
             if(typeof toast === 'function') toast('Erro ao apagar anotações.');
@@ -40,7 +40,7 @@ function renderNotes(){
     h+='<div class="neh" data-week="'+wn+'">';
     h+='<div><div class="newk">Semana '+wn+' | '+esc(wi.block)+'</div><div class="ner">'+esc(wi.range)+'</div><div class="ned">'+fmtD(wi.ds)+' - '+fmtD(wi.de)+'</div></div>';
     h+='<button class="nel" data-week="'+wn+'">Ir a semana &rarr;</button>';
-    h+='</div><div class="neb">'+esc(NT_NOTES[wn])+'</div></div>';
+    h+='</div><div class="neb">'+esc(weekNotes[wn])+'</div></div>';
   });
   c.innerHTML=h;
   document.querySelectorAll('.neh,.nel').forEach(el=>{
@@ -52,7 +52,7 @@ async function init(){
   const sp=document.getElementById('spinner');
   const pc=document.getElementById('page-content');
   try{
-    if(sp)sp.style.display='block';
+    if(sp)sp.classList.remove('hidden');
     setupNav();
     const user=await getUser();
     if(!user)return;
@@ -60,18 +60,18 @@ async function init(){
     const e=document.getElementById('uemail');if(e)e.textContent=user.email;
     renderPH();
     renderNotes();
-    if(pc)pc.style.display='block';
+    if(pc)pc.classList.remove('hidden');
     document.body.classList.add('ready');
     if(!ok)toast('Erro ao carregar dados. Verifique sua conexao.');
   }catch(err){
     console.error('init anotacoes:',err);
-    if(pc)pc.style.display='block';
+    if(pc)pc.classList.remove('hidden');
     document.body.classList.add('ready');
     const c=document.getElementById('nl');
     if(c)c.innerHTML='<div class="empty-state"><p>N&atilde;o foi poss&iacute;vel carregar suas anota&ccedil;&otilde;es.</p><p>Verifique sua conex&atilde;o e tente novamente.</p></div>';
     toast('Erro ao carregar dados. Verifique sua conexao.');
   }finally{
-    if(sp&&!document.body.classList.contains('ready'))sp.style.display='none';
+    if(sp&&!document.body.classList.contains('ready'))sp.classList.add('hidden');
   }
 }
 

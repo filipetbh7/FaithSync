@@ -3,7 +3,7 @@ let CW=32;
 
 function getWkFromURL(){
   const p=new URLSearchParams(location.search);
-  return parseInt(p.get('week'))||ST.currentWeek||32;
+  return parseInt(p.get('week'))||planState.currentWeek||32;
 }
 
 function navWk(d){
@@ -73,7 +73,7 @@ function renderDays(wk){
   const weekDates = calculateWeekDates();
   wk.days.forEach((day,i)=>{
     const key=CW+'-'+i;
-    const ck=!!ST.completedDays[key];
+    const ck=!!planState.completedDays[key];
     
     let actualDate = null;
     if (weekDates && weekDates[CW]) {
@@ -103,7 +103,7 @@ function renderVisual(wk){
 
 function renderComplement(wk){
   let h='';
-  const cd=!!ST.completedComplements[CW];
+  const cd=!!planState.completedComplements[CW];
   const weekDates = calculateWeekDates();
   let compDate = null;
   if (weekDates && weekDates[CW]) {
@@ -136,13 +136,13 @@ function renderReflection(wk){
 function renderNoteSection(wn){
   let h='';
   h+='<div class="sh">Anota&ccedil;&otilde;es da Semana</div>';
-  h+='<textarea class="ntxt" id="ntxt" data-week="'+wn+'" placeholder="Insights, perguntas, vers&iacute;culos marcantes...">'+esc(NT_NOTES[wn]||'')+'</textarea>';
+  h+='<textarea class="ntxt" id="ntxt" data-week="'+wn+'" placeholder="Insights, perguntas, vers&iacute;culos marcantes...">'+esc(weekNotes[wn]||'')+'</textarea>';
 
   h+='<div class="abar">';
   h+='<button class="abtn sv" id="btnSv">Salvar</button>';
   h+='<button class="abtn" id="btnExp">&#8595; Backup Local</button>';
   h+='<button class="abtn" id="btnImp">&#8593; Restaurar Backup</button>';
-  h+='<input type="file" id="fImp" accept=".json" style="display:none">';
+  h+='<input type="file" id="fImp" accept=".json" class="hidden">';
   h+='<button class="abtn danger" id="btnRst">Reiniciar Semana</button>';
   h+='</div>';
   return h;
@@ -182,20 +182,20 @@ function attachWeekNavHandlers(){
 let _nt=null,_np=null;
 
 async function togDay(key){
-  ST.completedDays[key]=!ST.completedDays[key];
+  planState.completedDays[key]=!planState.completedDays[key];
   const wn = parseInt(key.split('-')[0]);
   checkWeekCompletion(wn);
   renderWk(CW);
   const ok=await dbSave();
-  toast(ok?(ST.completedDays[key]?'Leitura marcada':'Marcacao removida'):'Erro - use botao Salvar');
+  toast(ok?(planState.completedDays[key]?'Leitura marcada':'Marcacao removida'):'Erro - use botao Salvar');
 }
 
 async function togComp(wn){
-  ST.completedComplements[wn]=!ST.completedComplements[wn];
+  planState.completedComplements[wn]=!planState.completedComplements[wn];
   checkWeekCompletion(wn);
   renderWk(wn);
   const ok=await dbSave();
-  toast(ok?(ST.completedComplements[wn]?'Complementacao concluida':'Marcacao removida'):'Erro - use botao Salvar');
+  toast(ok?(planState.completedComplements[wn]?'Complementacao concluida':'Marcacao removida'):'Erro - use botao Salvar');
 }
 
 async function doSave(){
@@ -215,8 +215,8 @@ function doExport(){
   const payload={
     version:1,
     exportedAt:new Date().toISOString(),
-    state:ST,
-    notes:NT_NOTES
+    state:planState,
+    notes:weekNotes
   };
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
@@ -238,7 +238,7 @@ async function doImport(ev){
       if(!check.valid){toast(check.reason);return;}
       if(Object.prototype.hasOwnProperty.call(d,'state')){
         const safeState=validateImportState(d.state);
-        ST=Object.assign({},ST,safeState);
+        planState=Object.assign({},planState,safeState);
       }
       const notesResult=await importValidNotes(d.notes);
       const ok=await dbSave();
@@ -299,10 +299,10 @@ async function importValidNotes(notes){
 function doReset(){
   if(confirm('Reiniciar marcacoes desta semana? Anotacoes mantidas.')){
     if(WEEKS_DATA[CW]){
-      WEEKS_DATA[CW].days.forEach((_,i)=>{delete ST.completedDays[CW+'-'+i];});
+      WEEKS_DATA[CW].days.forEach((_,i)=>{delete planState.completedDays[CW+'-'+i];});
     }
-    delete ST.completedComplements[CW];
-    if(ST.weekCompletionHistory) delete ST.weekCompletionHistory[CW];
+    delete planState.completedComplements[CW];
+    if(planState.weekCompletionHistory) delete planState.weekCompletionHistory[CW];
     dbSave();renderWk(CW);
     toast('Semana reiniciada');
   }
@@ -312,13 +312,13 @@ async function init(){
   const sp=document.getElementById('spinner');
   const pc=document.getElementById('page-content');
   try{
-    if(sp)sp.style.display='block';
+    if(sp)sp.classList.remove('hidden');
     setupNav();
     const user=await getUser();
     if(!user)return;
     const ok=await dbLoad(user.id);
     if(!renderWk(getWkFromURL()))throw new Error('Semana nao encontrada');
-    if(pc)pc.style.display='block';
+    if(pc)pc.classList.remove('hidden');
     document.body.classList.add('ready');
     const e=document.getElementById('uemail');if(e)e.textContent=user.email;
     if(!ok)toast('Erro ao carregar dados. Verifique sua conexao.');
@@ -326,14 +326,14 @@ async function init(){
     console.error('init semanas:',err);
     showInitError('Nao foi possivel carregar esta semana. Tente novamente em instantes.');
   }finally{
-    if(sp&&!document.body.classList.contains('ready'))sp.style.display='none';
+    if(sp&&!document.body.classList.contains('ready'))sp.classList.add('hidden');
   }
 }
 
 function showInitError(msg){
   const pc=document.getElementById('page-content');
   const mc=document.getElementById('mc');
-  if(pc)pc.style.display='block';
+  if(pc)pc.classList.remove('hidden');
   document.body.classList.add('ready');
   if(mc)mc.innerHTML='<div class="phbox"><div style="font-size:1.3rem;color:var(--igd);margin-bottom:.7rem">*</div>'+
     '<div style="font-size:.82rem;letter-spacing:.15em;color:var(--td)">ERRO AO CARREGAR</div>'+

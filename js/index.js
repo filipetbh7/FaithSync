@@ -3,8 +3,8 @@
 function goWeek(n){location.href="semanas.html?week="+n;}
 
 function planStartLabel(){
-  if(!ST.planStartDate)return'';
-  return 'Plano iniciado em '+new Date(ST.planStartDate).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if(!planState.planStartDate)return'';
+  return 'Plano iniciado em '+new Date(planState.planStartDate).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
 }
 
 function updatePlanControls(){
@@ -12,27 +12,29 @@ function updatePlanControls(){
   const resetBtn=document.getElementById('btn-reset-plan');
   const info=document.getElementById('plan-start-info');
   const histBtn=document.getElementById('btn-history');
-  const hasStart=!!ST.planStartDate;
+  const hasStart=!!planState.planStartDate;
   if(startBtn)startBtn.disabled=hasStart;
   if(resetBtn)resetBtn.disabled=!hasStart;
   if(info){
     info.textContent=planStartLabel();
-    info.style.display=hasStart?'inline':'none';
+    if(hasStart)info.classList.remove('hidden');
+    else info.classList.add('hidden');
   }
   if(histBtn){
-    const hasHistory = ST.weekCompletionHistory && Object.keys(ST.weekCompletionHistory).length > 0;
-    histBtn.style.display=hasHistory?'inline-block':'none';
+    const hasHistory = planState.weekCompletionHistory && Object.keys(planState.weekCompletionHistory).length > 0;
+    if(hasHistory)histBtn.classList.remove('hidden');
+    else histBtn.classList.add('hidden');
   }
 }
 
 async function startPlanToday(){
   const btn=document.getElementById('btn-start-plan');
-  if(ST.planStartDate)return;
-  ST.planStartDate=new Date().toISOString();
+  if(planState.planStartDate)return;
+  planState.planStartDate=new Date().toISOString();
   if(btn)btn.disabled=true;
   const ok=await dbSaveProgress();
   if(!ok){
-    ST.planStartDate=null;
+    planState.planStartDate=null;
     updatePlanControls();
     toast('Nao foi possivel salvar o inicio do plano.');
     return;
@@ -44,19 +46,19 @@ async function startPlanToday(){
 async function resetCurrentPlan(){
   const ok=confirm('Apagar plano? Todo o progresso, histórico e dias marcados serão removidos. As anotações serão mantidas. Esta ação não pode ser desfeita.');
   if(!ok)return;
-  ST.planStartDate=null;
-  ST.completedDays={};
-  ST.completedComplements={};
-  ST.weekCompletionHistory={};
-  ST.currentWeek=1;
+  planState.planStartDate=null;
+  planState.completedDays={};
+  planState.completedComplements={};
+  planState.weekCompletionHistory={};
+  planState.currentWeek=1;
   const saved=await dbSaveProgress();
   if(saved)location.reload();
   else toast('Nao foi possivel apagar o plano agora.');
 }
 
 function wkStatus(wn){
-  const dc=!!ST.completedComplements[wn];
-  const dd=Object.keys(ST.completedDays).filter(k=>k.startsWith(wn+'-')&&ST.completedDays[k]).length;
+  const dc=!!planState.completedComplements[wn];
+  const dd=Object.keys(planState.completedDays).filter(k=>k.startsWith(wn+'-')&&planState.completedDays[k]).length;
   if(dd>=6&&dc)return'done';
   if(dd>0||dc)return'prog';
   return'none';
@@ -120,10 +122,10 @@ async function initApp(){
   const iscr=document.getElementById('iscr');
   const err=document.getElementById('lerr');
   try{
-    if(spinner)spinner.style.display='block';
+    if(spinner)spinner.classList.remove('hidden');
     const {data:{session}}=await sb().auth.getSession();
     if(!session){
-      if(lscr)lscr.style.display='flex';
+      if(lscr)lscr.classList.remove('hidden');
       if(err&&new URLSearchParams(location.search).get('err')==='session'){
         err.textContent='Sessao expirada. Entre novamente.';
       }
@@ -132,8 +134,8 @@ async function initApp(){
     }
     const user=session.user;
     const ok=await dbLoad(user.id);
-    if(lscr)lscr.style.display='none';
-    if(iscr)iscr.style.display='block';
+    if(lscr)lscr.classList.add('hidden');
+    if(iscr)iscr.classList.remove('hidden');
     const e=document.getElementById('uemail');if(e)e.textContent=user.email;
     setupNav();
     renderPH();
@@ -142,12 +144,12 @@ async function initApp(){
     if(!ok)toast('Nao foi possivel carregar seus dados agora.');
   }catch(error){
     console.error('initApp:',error);
-    if(lscr)lscr.style.display='flex';
-    if(iscr)iscr.style.display='none';
+    if(lscr)lscr.classList.remove('hidden');
+    if(iscr)iscr.classList.add('hidden');
     if(err)err.textContent='Nao foi possivel conectar. Verifique sua conexao e tente novamente.';
     document.body.classList.add('ready');
   }finally{
-    if(spinner&&!document.body.classList.contains('ready'))spinner.style.display='none';
+    if(spinner&&!document.body.classList.contains('ready'))spinner.classList.add('hidden');
   }
 }
 
@@ -160,13 +162,13 @@ function setupModalHistory() {
   if(btn && modal && list) {
     btn.addEventListener('click', () => {
       list.innerHTML = '';
-      if (ST.weekCompletionHistory) {
-        const sortedKeys = Object.keys(ST.weekCompletionHistory).map(Number).sort((a,b)=>a-b);
+      if (planState.weekCompletionHistory) {
+        const sortedKeys = Object.keys(planState.weekCompletionHistory).map(Number).sort((a,b)=>a-b);
         if (sortedKeys.length === 0) {
           list.innerHTML = '<div class="empty-state">Nenhuma semana concluída ainda.</div>';
         } else {
           sortedKeys.forEach(wk => {
-            const entry = ST.weekCompletionHistory[wk];
+            const entry = planState.weekCompletionHistory[wk];
             const wi = WEEKS_INDEX[wk-1];
             const title = wi ? wi.block : 'Semana';
             
@@ -188,16 +190,16 @@ function setupModalHistory() {
           });
         }
       }
-      modal.style.display = 'flex';
+      modal.classList.remove('hidden');
     });
     if(closeBtn) {
       closeBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
+        modal.classList.add('hidden');
       });
     }
     modal.addEventListener('click', (e) => {
       if(e.target === modal) {
-        modal.style.display = 'none';
+        modal.classList.add('hidden');
       }
     });
   }
@@ -211,16 +213,16 @@ function setupModalMaterials() {
   
   if(btn && modal) {
     btn.addEventListener('click', () => {
-      modal.style.display = 'flex';
+      modal.classList.remove('hidden');
     });
     if(closeBtn) {
       closeBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
+        modal.classList.add('hidden');
       });
     }
     modal.addEventListener('click', (e) => {
       if(e.target === modal) {
-        modal.style.display = 'none';
+        modal.classList.add('hidden');
       }
     });
   }

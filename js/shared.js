@@ -170,10 +170,10 @@ function isToday(d){return d.toDateString()===new Date().toDateString();}
 function esc(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function toast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 
-let ST={completedDays:{},completedComplements:{},currentWeek:32,weekCompletionHistory:{}};
-let NT_NOTES={};
-let UID=null;
-function getUID(){return UID;}
+let planState = {completedDays:{},completedComplements:{},currentWeek:32,weekCompletionHistory:{}};
+let weekNotes = {};
+let currentUserId = null;
+function getCurrentUserId(){return currentUserId;}
 
 function nextSunday(date) {
   const d = new Date(date);
@@ -186,14 +186,14 @@ function nextSunday(date) {
 }
 
 function calculateWeekDates() {
-  if (!ST.planStartDate) return null;
+  if (!planState.planStartDate) return null;
   const dates = {};
   
-  let currentStart = nextSunday(new Date(ST.planStartDate));
+  let currentStart = nextSunday(new Date(planState.planStartDate));
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  if (!ST.weekCompletionHistory) ST.weekCompletionHistory = {};
+  if (!planState.weekCompletionHistory) planState.weekCompletionHistory = {};
 
   for (let w = 1; w <= TOTAL_WEEKS; w++) {
     const dStart = new Date(currentStart);
@@ -201,8 +201,8 @@ function calculateWeekDates() {
     dEnd.setDate(dEnd.getDate() + 6);
     
     let delayed = false;
-    if (w === ST.currentWeek) {
-      const isDay0Marked = !!ST.completedDays[w + '-0'];
+    if (w === planState.currentWeek) {
+      const isDay0Marked = !!planState.completedDays[w + '-0'];
       if (!isDay0Marked && today > dStart) {
         delayed = true;
       }
@@ -210,8 +210,8 @@ function calculateWeekDates() {
     
     dates[w] = { dateStart: dStart, dateEnd: dEnd, delayed: delayed };
     
-    if (ST.weekCompletionHistory[w]) {
-       let compDate = ST.weekCompletionHistory[w].completedAt || ST.weekCompletionHistory[w];
+    if (planState.weekCompletionHistory[w]) {
+       let compDate = planState.weekCompletionHistory[w].completedAt || planState.weekCompletionHistory[w];
        currentStart = nextSunday(new Date(compDate));
     } else {
        currentStart = new Date(currentStart);
@@ -224,14 +224,14 @@ function calculateWeekDates() {
 function checkWeekCompletion(wn) {
   let daysCompleted = 0;
   for (let i = 0; i < 6; i++) {
-    if (ST.completedDays[wn + '-' + i]) daysCompleted++;
+    if (planState.completedDays[wn + '-' + i]) daysCompleted++;
   }
-  const compCompleted = !!ST.completedComplements[wn];
+  const compCompleted = !!planState.completedComplements[wn];
   const isCompleted = (daysCompleted === 6 && compCompleted);
   
-  if (!ST.weekCompletionHistory) ST.weekCompletionHistory = {};
+  if (!planState.weekCompletionHistory) planState.weekCompletionHistory = {};
   
-  if (isCompleted && !ST.weekCompletionHistory[wn]) {
+  if (isCompleted && !planState.weekCompletionHistory[wn]) {
     const weekDates = calculateWeekDates();
     let daysElapsed = 0;
     let wasDelayed = false;
@@ -239,23 +239,23 @@ function checkWeekCompletion(wn) {
       daysElapsed = Math.round((new Date() - new Date(weekDates[wn].dateStart)) / 86400000);
       wasDelayed = weekDates[wn].delayed;
     }
-    ST.weekCompletionHistory[wn] = {
+    planState.weekCompletionHistory[wn] = {
       completedAt: new Date().toISOString(),
       daysElapsed: daysElapsed,
       wasDelayed: wasDelayed
     };
-    if (ST.currentWeek === wn) {
-      ST.currentWeek = Math.min(wn + 1, TOTAL_WEEKS);
+    if (planState.currentWeek === wn) {
+      planState.currentWeek = Math.min(wn + 1, TOTAL_WEEKS);
     }
-  } else if (!isCompleted && ST.weekCompletionHistory[wn]) {
-    delete ST.weekCompletionHistory[wn];
+  } else if (!isCompleted && planState.weekCompletionHistory[wn]) {
+    delete planState.weekCompletionHistory[wn];
   }
 }
 
 
 function renderPH(wk){
-  const tot=Object.values(ST.completedDays).filter(Boolean).length;
-  const wkd=Object.keys(ST.completedComplements).filter(k=>ST.completedComplements[k]).length;
+  const tot=Object.values(planState.completedDays).filter(Boolean).length;
+  const wkd=Object.keys(planState.completedComplements).filter(k=>planState.completedComplements[k]).length;
   const ch=Math.min(tot,TOTAL_CHAPTERS);
   const pct=Math.round(ch/TOTAL_CHAPTERS*100);
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
@@ -268,9 +268,9 @@ function renderPH(wk){
 
   let atCompleted = 0;
   let ntCompleted = 0;
-  if (ST.completedDays) {
-    Object.keys(ST.completedDays).forEach(key => {
-      if (!ST.completedDays[key]) return;
+  if (planState.completedDays) {
+    Object.keys(planState.completedDays).forEach(key => {
+      if (!planState.completedDays[key]) return;
       const parts = key.split('-');
       const s = parseInt(parts[0]);
       const d = parseInt(parts[1]);
@@ -321,8 +321,8 @@ function renderPH(wk){
     if(wd){
       const bk=getBook(wd.chaptersStart);
       let bkCh=0;
-      Object.keys(ST.completedDays).forEach(key=>{
-        if(!ST.completedDays[key])return;
+      Object.keys(planState.completedDays).forEach(key=>{
+        if(!planState.completedDays[key])return;
         const wn=parseInt(key.split('-')[0]);
         const d2=WEEKS_DATA[wn];if(!d2)return;
         if(getBook(d2.chaptersStart)[3]===bk[3])bkCh++;
