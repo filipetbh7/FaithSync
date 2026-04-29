@@ -20,31 +20,44 @@ function navWk(d){
 function renderWk(wn){
   CW=wn;
   const wi=WEEKS_INDEX[wn-1];
+  const mc=document.getElementById('mc');
+  if(!wi||!mc)return false;
+  renderWeekHeader(wn,wi);
+  const wk=WEEKS_DATA[wn];
+  if(!wk||!Array.isArray(wk.days)||!wk.days.length){
+    mc.innerHTML=renderEmptyWeek(wn,wi,wk);
+    attachWeekNavHandlers();
+    return true;
+  }
+  mc.innerHTML=renderDays(wk)+renderVisual(wk)+renderComplement(wk)+renderReflection(wk)+renderNoteSection(wn);
+  attachWeekHandlers();
+  return true;
+}
+
+function renderWeekHeader(wn,wi){
   document.getElementById('btnP').disabled=wn<=1;
   document.getElementById('btnN').disabled=wn>=TOTAL_WEEKS;
   document.getElementById('wknum').textContent='Semana '+wn;
   document.getElementById('wkttl').textContent=(WEEKS_DATA[wn]&&WEEKS_DATA[wn].title)||'Semana '+wn;
   document.getElementById('wksub').textContent=fmtD(wi.ds)+' - '+fmtD(wi.de)+' | '+wi.range;
   renderPH(wn);
+}
 
-  const wk=WEEKS_DATA[wn];
-  const mc=document.getElementById('mc');
+function renderEmptyWeek(wn,wi,wk){
+  const range=(wk&&wk.range)||wi.range;
+  return '<div class="empty-state">'+
+    '<p>Conte&uacute;do desta semana ainda n&atilde;o dispon&iacute;vel.</p>'+
+    '<p>Semana <strong>'+wn+'</strong> &mdash; <em>'+esc(range)+'</em></p>'+
+    '<p>O conte&uacute;do ser&aacute; adicionado progressivamente.</p>'+
+    '</div>';
+}
 
-  if(!wk){
-    mc.innerHTML='<div class="phbox"><div style="font-size:1.3rem;color:var(--igd);margin-bottom:.7rem">*</div>'+
-      '<div style="font-size:.82rem;letter-spacing:.15em;color:var(--td)">SEMANA '+wn+' | '+wi.block+'</div>'+
-      '<div style="margin-top:.7rem;font-size:.84rem;color:var(--td);font-style:italic">'+wi.range+'<br><br>Este conte&uacute;do ser&aacute; adicionado em breve.</div>'+
-      '<button class="abtn" id="btnBack" style="margin-top:1.2rem">&larr; Voltar ao &Iacute;ndice</button></div>';
-    const bb=document.getElementById('btnBack');
-    if(bb)bb.onclick=()=>location.href='index.html';
-    return;
-  }
-
+function renderDays(wk){
   let h='';
   h+='<div class="sh">Leitura Di&aacute;ria | 15 minutos por dia</div>';
   h+='<div class="dgrd">';
   wk.days.forEach((day,i)=>{
-    const key=wn+'-'+i;
+    const key=CW+'-'+i;
     const ck=!!ST.completedDays[key];
     const td=isToday(day.date);
     h+='<div class="dc'+(ck?' ck':'')+(td?' td':'')+'" data-key="'+key+'">';
@@ -56,15 +69,23 @@ function renderWk(wn){
     h+='</div>';
   });
   h+='</div>';
+  return h;
+}
 
+function renderVisual(wk){
+  let h='';
   h+='<div class="sh">Visual da Semana</div>';
   h+='<div class="vcnt"><div class="vttl">Os Quatro Imp&eacute;rios de Daniel | Mapa Temporal</div>'+wk.visual+'</div>';
+  return h;
+}
 
-  const cd=!!ST.completedComplements[wn];
+function renderComplement(wk){
+  let h='';
+  const cd=!!ST.completedComplements[CW];
   h+='<div class="sh">Complementa&ccedil;&atilde;o Semanal | ~1 hora | '+fmtD(wk.complement.date)+'</div>';
   h+='<div class="ccard"><div class="cchdr"><div class="cttl">Estudo Complementar - '+esc(wk.title)+'</div>';
   h+='<div style="display:flex;align-items:center;gap:.7rem"><div class="cdt">'+fmtDFull(wk.complement.date)+'</div>';
-  h+='<div class="dchk'+(cd?' ck':'')+'" data-comp="'+wn+'"></div></div></div>';
+  h+='<div class="dchk'+(cd?' ck':'')+'" data-comp="'+CW+'"></div></div></div>';
   h+='<p class="cintro">'+esc(wk.complement.intro)+'</p><div class="rgrd">';
   wk.complement.resources.forEach(r=>{
     h+='<div class="rb '+r.type+'"><div class="rsrc">'+esc(r.title)+'</div><div class="rcnt"><ul>';
@@ -72,11 +93,19 @@ function renderWk(wn){
     h+='</ul></div></div>';
   });
   h+='</div></div>';
+  return h;
+}
 
+function renderReflection(wk){
+  let h='';
   h+='<div class="sh">Reflex&atilde;o da Semana</div>';
   h+='<div class="rfcard"><div class="rforn">"</div><div class="rfq">'+esc(wk.reflection.verse)+'</div>';
   h+='<div class="rfref">'+esc(wk.reflection.reference)+'</div><div class="rfq2">* '+esc(wk.reflection.question)+'</div></div>';
+  return h;
+}
 
+function renderNoteSection(wn){
+  let h='';
   h+='<div class="sh">Anota&ccedil;&otilde;es da Semana</div>';
   h+='<textarea class="ntxt" id="ntxt" data-week="'+wn+'" placeholder="Insights, perguntas, vers&iacute;culos marcantes...">'+esc(NT_NOTES[wn]||'')+'</textarea>';
 
@@ -87,12 +116,11 @@ function renderWk(wn){
   h+='<input type="file" id="fImp" accept=".json" style="display:none">';
   h+='<button class="abtn danger" id="btnRst">Reiniciar Semana</button>';
   h+='</div>';
-
-  mc.innerHTML=h;
-  attachWeekHandlers();
+  return h;
 }
 
 function attachWeekHandlers(){
+  attachWeekNavHandlers();
   document.querySelectorAll('[data-key]').forEach(el=>{
     el.onclick=(ev)=>{ev.stopPropagation();togDay(el.dataset.key);};
   });
@@ -113,8 +141,13 @@ function attachWeekHandlers(){
   const bIm=document.getElementById('btnImp');if(bIm)bIm.onclick=()=>document.getElementById('fImp').click();
   const fI=document.getElementById('fImp');if(fI)fI.onchange=doImport;
   const bR=document.getElementById('btnRst');if(bR)bR.onclick=doReset;
-  document.getElementById('btnP').onclick=()=>navWk(-1);
-  document.getElementById('btnN').onclick=()=>navWk(1);
+}
+
+function attachWeekNavHandlers(){
+  const btnP=document.getElementById('btnP');
+  const btnN=document.getElementById('btnN');
+  if(btnP)btnP.onclick=()=>navWk(-1);
+  if(btnN)btnN.onclick=()=>navWk(1);
 }
 
 let _nt=null,_np=null;
@@ -169,12 +202,19 @@ async function doImport(ev){
   r.onload=async(e)=>{
     try{
       const d=JSON.parse(e.target.result);
-      if(d.state)ST=Object.assign({},ST,d.state);
-      if(d.notes){
-        for(const k in d.notes){await dbSaveNote(parseInt(k),d.notes[k]);}
+      const check=validateImport(d);
+      if(!check.valid){toast(check.reason);return;}
+      if(Object.prototype.hasOwnProperty.call(d,'state')){
+        const safeState=validateImportState(d.state);
+        ST=Object.assign({},ST,safeState);
       }
+      const notesResult=await importValidNotes(d.notes);
       const ok=await dbSave();
-      if(ok){renderWk(CW);toast('Backup restaurado com sucesso');}
+      if(ok){
+        renderWk(CW);
+        if(notesResult.ignored>0)toast('Backup restaurado. '+notesResult.ignored+' anotacao(oes) ignorada(s) por dados invalidos.');
+        else toast('Backup restaurado com sucesso');
+      }
       else toast('Erro ao salvar no servidor — tente novamente');
     }catch(err){
       console.error('doImport error:',err);
@@ -182,6 +222,46 @@ async function doImport(ev){
     }
   };
   r.readAsText(file);
+}
+
+function validateImport(d){
+  if(!d||typeof d!=='object'||Array.isArray(d))return {valid:false,reason:'Arquivo invalido ou corrompido'};
+  if(!Object.prototype.hasOwnProperty.call(d,'version'))return {valid:false,reason:'Arquivo invalido: versao do backup ausente'};
+  const hasState=Object.prototype.hasOwnProperty.call(d,'state');
+  const hasNotes=Object.prototype.hasOwnProperty.call(d,'notes');
+  if(!hasState&&!hasNotes)return {valid:false,reason:'Arquivo nao contem dados para restaurar'};
+  if(hasState&&(!d.state||typeof d.state!=='object'||Array.isArray(d.state)))return {valid:false,reason:'Arquivo invalido: estado do backup corrompido'};
+  if(hasNotes&&(!d.notes||typeof d.notes!=='object'||Array.isArray(d.notes)))return {valid:false,reason:'Arquivo invalido: anotacoes do backup corrompidas'};
+  return {valid:true};
+}
+
+function validateImportState(state){
+  const safe={};
+  if(state.completedDays&&typeof state.completedDays==='object'&&!Array.isArray(state.completedDays)){
+    safe.completedDays=state.completedDays;
+  }
+  if(state.completedComplements&&typeof state.completedComplements==='object'&&!Array.isArray(state.completedComplements)){
+    safe.completedComplements=state.completedComplements;
+  }
+  if(Number.isInteger(state.currentWeek)&&state.currentWeek>=1&&state.currentWeek<=TOTAL_WEEKS){
+    safe.currentWeek=state.currentWeek;
+  }
+  return safe;
+}
+
+async function importValidNotes(notes){
+  let ignored=0;
+  if(!notes)return {ignored:ignored};
+  for(const k in notes){
+    if(!Object.prototype.hasOwnProperty.call(notes,k))continue;
+    const wn=Number(k);
+    if(!Number.isInteger(wn)||wn<1||wn>TOTAL_WEEKS||typeof notes[k]!=='string'){
+      ignored++;
+      continue;
+    }
+    await dbSaveNote(wn,notes[k]);
+  }
+  return {ignored:ignored};
 }
 
 function doReset(){
@@ -196,16 +276,39 @@ function doReset(){
 }
 
 async function init(){
-  setupNav();
-  const user=await getUser();
-  if(!user){location.href='index.html';return;}
-  await dbLoad(user.id);
-  // Reveal page content, hide spinner
-  const sp=document.getElementById('spinner');if(sp)sp.style.display='none';
-  const pc=document.getElementById('page-content');if(pc)pc.style.display='block';
+  const sp=document.getElementById('spinner');
+  const pc=document.getElementById('page-content');
+  try{
+    if(sp)sp.style.display='block';
+    setupNav();
+    const user=await getUser();
+    if(!user)return;
+    const ok=await dbLoad(user.id);
+    if(!renderWk(getWkFromURL()))throw new Error('Semana nao encontrada');
+    if(pc)pc.style.display='block';
+    document.body.classList.add('ready');
+    const e=document.getElementById('uemail');if(e)e.textContent=user.email;
+    if(!ok)toast('Erro ao carregar dados. Verifique sua conexao.');
+  }catch(err){
+    console.error('init semanas:',err);
+    showInitError('Nao foi possivel carregar esta semana. Tente novamente em instantes.');
+  }finally{
+    if(sp&&!document.body.classList.contains('ready'))sp.style.display='none';
+  }
+}
+
+function showInitError(msg){
+  const pc=document.getElementById('page-content');
+  const mc=document.getElementById('mc');
+  if(pc)pc.style.display='block';
   document.body.classList.add('ready');
-  const e=document.getElementById('uemail');if(e)e.textContent=user.email;
-  renderWk(getWkFromURL());
+  if(mc)mc.innerHTML='<div class="phbox"><div style="font-size:1.3rem;color:var(--igd);margin-bottom:.7rem">*</div>'+
+    '<div style="font-size:.82rem;letter-spacing:.15em;color:var(--td)">ERRO AO CARREGAR</div>'+
+    '<div style="margin-top:.7rem;font-size:.84rem;color:var(--td);font-style:italic">'+esc(msg)+'</div>'+
+    '<button class="abtn" id="btnBack" style="margin-top:1.2rem">&larr; Voltar ao &Iacute;ndice</button></div>';
+  const bb=document.getElementById('btnBack');
+  if(bb)bb.onclick=()=>location.href='index.html';
+  toast(msg);
 }
 
 init();

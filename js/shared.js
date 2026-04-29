@@ -176,9 +176,23 @@ function sb(){
   return _sb;
 }
 async function getUser(){
-  const r=await sb().auth.getSession();
-  if(r.error)console.error('getSession:',r.error.message);
-  return r.data.session?r.data.session.user:null;
+  try{
+    const r=await sb().auth.getSession();
+    if(r.error){
+      console.error('getSession:',r.error.message);
+      window.location.href='index.html?err=session';
+      return null;
+    }
+    if(!r.data.session){
+      window.location.href='index.html?err=session';
+      return null;
+    }
+    return r.data.session.user;
+  }catch(err){
+    console.error('getSession:',err);
+    window.location.href='index.html?err=session';
+    return null;
+  }
 }
 async function doLogout(){await sb().auth.signOut();window.location.href='index.html';}
 
@@ -188,12 +202,28 @@ let UID=null;
 
 async function dbLoad(uid){
   UID=uid;
-  const r1=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
-  if(r1.error)console.error('load progress:',r1.error.message);
-  if(r1.data&&r1.data.data){ST=Object.assign({},ST,r1.data.data);}
-  const r2=await sb().from('notes').select('week_number,content').eq('user_id',uid);
-  if(r2.error)console.error('load notes:',r2.error.message);
-  if(r2.data){r2.data.forEach(r=>NT_NOTES[r.week_number]=r.content);}
+  let ok=true;
+  try{
+    const r1=await sb().from('progress').select('data').eq('user_id',uid).maybeSingle();
+    if(r1.error){
+      console.error('load progress:',r1.error.message);
+      ok=false;
+    }else if(r1.data&&r1.data.data){
+      ST=Object.assign({},ST,r1.data.data);
+    }
+    const r2=await sb().from('notes').select('week_number,content').eq('user_id',uid);
+    if(r2.error){
+      console.error('load notes:',r2.error.message);
+      ok=false;
+    }else if(r2.data){
+      r2.data.forEach(r=>NT_NOTES[r.week_number]=r.content);
+    }
+  }catch(err){
+    console.error('dbLoad:',err);
+    ok=false;
+  }
+  if(!ok)toast('Erro ao carregar dados. Verifique sua conexao.');
+  return ok;
 }
 async function dbSave(){
   if(!UID)return false;

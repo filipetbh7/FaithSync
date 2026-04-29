@@ -9,30 +9,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FaithSync">
 <link rel="stylesheet" href="css/style.css">
-<style>
-body{opacity:0;transition:opacity .25s ease;}body.ready{opacity:1;}
-.toast{position:fixed;bottom:2rem;right:2rem;background:var(--pw);border:1px solid var(--igd);color:var(--tp);font-family:inherit;font-size:.67rem;letter-spacing:.12em;padding:.7rem 1.2rem;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;z-index:999;max-width:260px;}
-.toast.show{opacity:1;transform:translateY(0);}
-footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-top:1px solid var(--bo);font-style:italic;}
-@keyframes fi{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.fi{animation:fi .35s ease both;}
-@media(max-width:600px){.psts{gap:1rem;}.tnav{gap:.4rem;}}
-
-.npg{max-width:900px;margin:1.4rem auto 3rem;padding:0 2rem;}
-.nphdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:.5rem;}
-.npttl{font-size:.93rem;color:var(--igb);font-weight:700;letter-spacing:.08em;}
-.npsub{font-size:.72rem;color:var(--td);font-style:italic;margin-top:.15rem;}
-.npemp{text-align:center;padding:3rem 2rem;font-size:.84rem;color:var(--td);font-style:italic;border:1px solid var(--bo);background:var(--pm);}
-.ne{margin-bottom:.95rem;border:1px solid var(--bo);background:var(--pm);overflow:hidden;}
-.neh{display:flex;align-items:center;justify-content:space-between;padding:.68rem .95rem;background:rgba(0,0,0,.2);border-bottom:1px solid var(--bo);flex-wrap:wrap;gap:.32rem;cursor:pointer;transition:background .2s;}
-.neh:hover{background:rgba(201,168,76,.06);}
-.newk{font-size:.6rem;letter-spacing:.2em;color:var(--igd);text-transform:uppercase;}
-.ner{font-size:.84rem;color:var(--tp);font-weight:500;}
-.ned{font-size:.68rem;color:var(--td);font-style:italic;}
-.nel{font-size:.6rem;letter-spacing:.15em;color:var(--igd);text-transform:uppercase;cursor:pointer;padding:.26rem .52rem;border:1px solid var(--bo);transition:all .2s;background:none;font-family:inherit;white-space:nowrap;}
-.nel:hover{border-color:var(--ig);color:var(--ig);}
-.neb{padding:.88rem .95rem;font-size:.87rem;color:var(--ts);line-height:1.7;white-space:pre-wrap;border-left:3px solid var(--igd);}
-</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>

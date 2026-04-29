@@ -53,26 +53,40 @@ async function doLogin(){
 }
 
 async function initApp(){
-  const {data:{session}}=await sb().auth.getSession();
   const spinner=document.getElementById('spinner');
   const lscr=document.getElementById('lscr');
   const iscr=document.getElementById('iscr');
-  if(!session){
-    if(spinner)spinner.style.display='none';
-    if(lscr)lscr.style.display='flex';
+  const err=document.getElementById('lerr');
+  try{
+    if(spinner)spinner.style.display='block';
+    const {data:{session}}=await sb().auth.getSession();
+    if(!session){
+      if(lscr)lscr.style.display='flex';
+      if(err&&new URLSearchParams(location.search).get('err')==='session'){
+        err.textContent='Sessao expirada. Entre novamente.';
+      }
+      document.body.classList.add('ready');
+      return;
+    }
+    const user=session.user;
+    const ok=await dbLoad(user.id);
+    if(lscr)lscr.style.display='none';
+    if(iscr)iscr.style.display='block';
+    const e=document.getElementById('uemail');if(e)e.textContent=user.email;
+    setupNav();
+    renderPH();
+    renderIndex();
     document.body.classList.add('ready');
-    return;
+    if(!ok)toast('Nao foi possivel carregar seus dados agora.');
+  }catch(error){
+    console.error('initApp:',error);
+    if(lscr)lscr.style.display='flex';
+    if(iscr)iscr.style.display='none';
+    if(err)err.textContent='Nao foi possivel conectar. Verifique sua conexao e tente novamente.';
+    document.body.classList.add('ready');
+  }finally{
+    if(spinner&&!document.body.classList.contains('ready'))spinner.style.display='none';
   }
-  const user=session.user;
-  await dbLoad(user.id);
-  if(spinner)spinner.style.display='none';
-  if(lscr)lscr.style.display='none';
-  if(iscr)iscr.style.display='block';
-  document.body.classList.add('ready');
-  const e=document.getElementById('uemail');if(e)e.textContent=user.email;
-  setupNav();
-  renderPH();
-  renderIndex();
 }
 
 // Boot
