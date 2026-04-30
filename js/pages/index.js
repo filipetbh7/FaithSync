@@ -1,11 +1,38 @@
 import { planState } from '../state.js';
 import { WEEKS_INDEX } from '../const.js';
-import { calculateWeekDates, checkWeekCompletion } from '../domain.js';
+import { calculateWeekDates } from '../domain.js';
 import { renderPH, injectAppShell } from '../ui.js';
 import { esc, fmtD, fmtDFull, toast } from '../utils.js';
-import { sb, dbLoad, dbSaveProgress, doLogout } from '../db.js';
+import { sb, waitForSupabaseRuntime, dbLoad, dbSaveProgress } from '../db.js';
+
+const AUTH_TIMEOUT_MS = 7000;
 
 function goWeek(n) { location.href = "semanas.html?week=" + n; }
+
+function withTimeout(promise, timeoutMs, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(message)), timeoutMs);
+    })
+  ]);
+}
+
+function finishLoading() {
+  const spinner = document.getElementById('spinner');
+  if (spinner) spinner.classList.add('hidden');
+  document.body.classList.add('ready');
+}
+
+function showLogin(message) {
+  const lscr = document.getElementById('lscr');
+  const iscr = document.getElementById('iscr');
+  const err = document.getElementById('lerr');
+  if (lscr) lscr.classList.remove('hidden');
+  if (iscr) iscr.classList.add('hidden');
+  if (err && message) err.textContent = message;
+  finishLoading();
+}
 
 function planStartLabel() {
   if (!planState.planStartDate) return '';
@@ -115,31 +142,46 @@ async function doLogin() {
   err.textContent = '';
   btn.textContent = 'Entrando...';
   btn.disabled = true;
-  const { error } = await sb().auth.signInWithPassword({ email, password: pass });
-  if (error) {
-    err.textContent = 'E-mail ou senha incorretos.';
+  try {
+    await waitForSupabaseRuntime();
+    const { error } = await withTimeout(
+      sb().auth.signInWithPassword({ email, password: pass }),
+      AUTH_TIMEOUT_MS,
+      'Tempo esgotado ao tentar entrar.'
+    );
+    if (error) {
+      err.textContent = 'E-mail ou senha incorretos.';
+      btn.textContent = 'Entrar';
+      btn.disabled = false;
+    } else {
+      const appStarted = await initApp();
+      if (!appStarted) {
+        btn.textContent = 'Entrar';
+        btn.disabled = false;
+      }
+    }
+  } catch (error) {
+    console.error('doLogin:', error);
+    err.textContent = 'Nao foi possivel conectar. Verifique sua conexao e tente novamente.';
     btn.textContent = 'Entrar';
     btn.disabled = false;
-  } else {
-    await initApp();
   }
 }
 
 async function initApp() {
   const spinner = document.getElementById('spinner');
-  const lscr = document.getElementById('lscr');
-  const iscr = document.getElementById('iscr');
-  const err = document.getElementById('lerr');
   try {
     if (spinner) spinner.classList.remove('hidden');
-    const { data: { session } } = await sb().auth.getSession();
+    await waitForSupabaseRuntime();
+    const { data: { session } } = await withTimeout(
+      sb().auth.getSession(),
+      AUTH_TIMEOUT_MS,
+      'Tempo esgotado ao verificar a sessao.'
+    );
     if (!session) {
-      if (lscr) lscr.classList.remove('hidden');
-      if (err && new URLSearchParams(location.search).get('err') === 'session') {
-        err.textContent = 'Sessao expirada. Entre novamente.';
-      }
-      document.body.classList.add('ready');
-      return;
+      const sessionExpired = new URLSearchParams(location.search).get('err') === 'session';
+      showLogin(sessionExpired ? 'Sessao expirada. Entre novamente.' : '');
+      return false;
     }
     const user = session.user;
     const ok = await dbLoad(user.id);
@@ -151,16 +193,15 @@ async function initApp() {
     const e = document.getElementById('uemail'); if (e) e.textContent = user.email;
     renderPH();
     renderIndex();
-    document.body.classList.add('ready');
+    finishLoading();
     if (!ok) toast('Nao foi possivel carregar seus dados agora.');
+    return true;
   } catch (error) {
     console.error('initApp:', error);
-    if (lscr) lscr.classList.remove('hidden');
-    if (iscr) iscr.classList.add('hidden');
-    if (err) err.textContent = 'Nao foi possivel conectar. Verifique sua conexao e tente novamente.';
-    document.body.classList.add('ready');
+    showLogin('Nao foi possivel conectar. Verifique sua conexao e tente novamente.');
+    return false;
   } finally {
-    if (spinner && !document.body.classList.contains('ready')) spinner.classList.add('hidden');
+    finishLoading();
   }
 }
 

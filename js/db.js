@@ -1,7 +1,36 @@
 import { planState, weekNotes, setCurrentUserId, getCurrentUserId, resetState } from './state.js';
 import { SUPABASE_URL, SUPABASE_ANON } from './const.js';
 
+const SUPABASE_READY_TIMEOUT_MS = 5000;
+
+function isSupabaseRuntimeReady() {
+  return !!(window.supabase && typeof window.supabase.createClient === 'function');
+}
+
+export function waitForSupabaseRuntime(timeoutMs = SUPABASE_READY_TIMEOUT_MS) {
+  if (isSupabaseRuntimeReady()) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const startedAt = Date.now();
+    const timer = setInterval(() => {
+      if (isSupabaseRuntimeReady()) {
+        clearInterval(timer);
+        resolve();
+        return;
+      }
+
+      if (Date.now() - startedAt >= timeoutMs) {
+        clearInterval(timer);
+        reject(new Error('Supabase runtime indisponivel.'));
+      }
+    }, 50);
+  });
+}
+
 export function sb() {
+  if (!isSupabaseRuntimeReady()) {
+    throw new Error('Supabase runtime indisponivel.');
+  }
   if (!window._supabase) {
     window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   }
