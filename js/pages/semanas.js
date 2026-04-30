@@ -1,10 +1,11 @@
 import { planState, weekNotes } from '../state.js';
 import { TOTAL_WEEKS, WEEKS_INDEX } from '../const.js';
-import { WEEKS_DATA } from '../semanas.js';
+import { loadWeek } from '../content-loader.js';
 import { calculateWeekDates, checkWeekCompletion } from '../domain.js';
 import { renderPH, injectAppShell } from '../ui.js';
 import { esc, fmtD, fmtDFull, isToday, toast } from '../utils.js';
-import { getUser, dbLoad, dbSave, dbSaveNote } from '../db.js';
+import { sb, dbLoad, dbSave, dbSaveNote } from '../db.js';
+import { validateImportState } from '../validators.js';
 
 let CW = 32;
 
@@ -13,22 +14,24 @@ function getWkFromURL() {
   return parseInt(p.get('week')) || planState.currentWeek || 32;
 }
 
-function navWk(d) {
+async function navWk(d) {
   const n = CW + d;
   if (n < 1 || n > TOTAL_WEEKS) return;
   CW = n;
   history.replaceState(null, '', 'semanas.html?week=' + n);
-  renderWk(n);
+  await renderWk(n);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function renderWk(wn) {
+async function renderWk(wn) {
   CW = wn;
   const wi = WEEKS_INDEX[wn - 1];
   const mc = document.getElementById('mc');
   if (!wi || !mc) return false;
-  renderWeekHeader(wn, wi);
-  const wk = WEEKS_DATA[wn];
+  renderWeekHeader(wn, wi, null);
+  const wk = wi.hasContent ? await loadWeek(wn) : null;
+  if (CW !== wn) return true;
+  renderWeekHeader(wn, wi, wk);
   if (!wk || !Array.isArray(wk.days) || !wk.days.length) {
     mc.innerHTML = renderEmptyWeek(wn, wi, wk);
     attachWeekNavHandlers();
@@ -39,11 +42,11 @@ function renderWk(wn) {
   return true;
 }
 
-function renderWeekHeader(wn, wi) {
+function renderWeekHeader(wn, wi, wk) {
   document.getElementById('btnP').disabled = wn <= 1;
   document.getElementById('btnN').disabled = wn >= TOTAL_WEEKS;
   document.getElementById('wknum').textContent = 'Semana ' + wn;
-  document.getElementById('wkttl').textContent = (WEEKS_DATA[wn] && WEEKS_DATA[wn].title) || 'Semana ' + wn;
+  document.getElementById('wkttl').textContent = (wk && wk.title) || 'Semana ' + wn;
   
   const weekDates = calculateWeekDates();
   let subText = wi.range;
@@ -65,9 +68,9 @@ function renderWeekHeader(wn, wi) {
 }
 
 function renderEmptyWeek(wn, wi, wk) {
-  const range = (wk && wk.range) || wi.range;
+  const range = (wk && wk.title) || wi.range;
   return '<div class="empty-state">' +
-    '<p>Conte&uacute;do desta semana ainda n&atilde;o dispon&iacute;vel.</p>' +
+    '<p>Conte&uacute;do em breve.</p>' +
     '<p>Semana <strong>' + wn + '</strong> &mdash; <em>' + esc(range) + '</em></p>' +
     '<p>O conte&uacute;do ser&aacute; adicionado progressivamente.</p>' +
     '</div>';
@@ -92,7 +95,7 @@ function renderDays(wk) {
     h += '<div class="dc' + (ck ? ' ck' : '') + (td ? ' td' : '') + '" data-key="' + key + '">';
     h += '<div class="dch"><div><div class="dlbl">' + esc(day.dayOfWeek) + '</div><div class="ddt">' + (actualDate ? fmtD(actualDate) : '') + '</div></div>';
     h += '<div class="dchk' + (ck ? ' ck' : '') + '" data-key="' + key + '"></div></div>';
-    h += '<div class="dr">' + esc(day.reading) + (day.verses ? ' <span style="color:var(--td);font-size:.82em">' + esc(day.verses) + '</span>' : '') + '</div>';
+    h += '<div class="dr">' + esc(day.reading) + (day.verses ? ' <span class="verse-detail">' + esc(day.verses) + '</span>' : '') + '</div>';
     h += '<div class="dctx">' + esc(day.context) + '</div>';
     h += (td ? '<div class="dbdg td">Hoje</div>' : ck ? '<div class="dbdg">Lido</div>' : '');
     h += '</div>';
@@ -102,9 +105,13 @@ function renderDays(wk) {
 }
 
 function renderVisual(wk) {
+  if (typeof wk._renderVisual !== 'function') return '';
+  const visual = wk._renderVisual(wk.visualData);
+  if (!visual) return '';
+  const title = wk.visualData && wk.visualData.heading ? wk.visualData.heading : 'Visual da Semana';
   let h = '';
   h += '<div class="sh">Visual da Semana</div>';
-  h += '<div class="vcnt"><div class="vttl">Os Quatro Imp&eacute;rios de Daniel | Mapa Temporal</div>' + wk.visual + '</div>';
+  h += '<div class="vcnt"><div class="vttl">' + esc(title) + '</div>' + visual + '</div>';
   return h;
 }
 
@@ -120,7 +127,7 @@ function renderComplement(wk) {
   
   h += '<div class="sh">Complementa&ccedil;&atilde;o Semanal | ~1 hora' + (compDate ? ' | ' + fmtD(compDate) : '') + '</div>';
   h += '<div class="ccard"><div class="cchdr"><div class="cttl">Estudo Complementar - ' + esc(wk.title) + '</div>';
-  h += '<div style="display:flex;align-items:center;gap:.7rem"><div class="cdt">' + (compDate ? fmtDFull(compDate) : '') + '</div>';
+  h += '<div class="comp-meta"><div class="cdt">' + (compDate ? fmtDFull(compDate) : '') + '</div>';
   h += '<div class="dchk' + (cd ? ' ck' : '') + '" data-comp="' + CW + '"></div></div></div>';
   h += '<p class="cintro">' + esc(wk.complement.intro) + '</p><div class="rgrd">';
   wk.complement.resources.forEach(r => {
@@ -158,32 +165,38 @@ function renderNoteSection(wn) {
 function attachWeekHandlers() {
   attachWeekNavHandlers();
   document.querySelectorAll('[data-key]').forEach(el => {
-    el.onclick = (ev) => { ev.stopPropagation(); togDay(el.dataset.key); };
+    el.addEventListener('click', (ev) => { ev.stopPropagation(); togDay(el.dataset.key); });
   });
   document.querySelectorAll('[data-comp]').forEach(el => {
-    el.onclick = (ev) => { ev.stopPropagation(); togComp(parseInt(el.dataset.comp)); };
+    el.addEventListener('click', (ev) => { ev.stopPropagation(); togComp(parseInt(el.dataset.comp)); });
   });
   const nt = document.getElementById('ntxt');
   if (nt) {
-    nt.oninput = () => {
+    nt.addEventListener('input', () => {
       const wn = parseInt(nt.dataset.week);
       clearTimeout(_nt);
       _np = { wn: wn, txt: nt.value };
       _nt = setTimeout(async () => { await dbSaveNote(wn, nt.value); _np = null; }, 1500);
-    };
+    });
   }
-  const bSv = document.getElementById('btnSv'); if (bSv) bSv.onclick = doSave;
-  const bEx = document.getElementById('btnExp'); if (bEx) bEx.onclick = doExport;
-  const bIm = document.getElementById('btnImp'); if (bIm) bIm.onclick = () => document.getElementById('fImp').click();
-  const fI = document.getElementById('fImp'); if (fI) fI.onchange = doImport;
-  const bR = document.getElementById('btnRst'); if (bR) bR.onclick = doReset;
+  const bSv = document.getElementById('btnSv'); if (bSv) bSv.addEventListener('click', doSave);
+  const bEx = document.getElementById('btnExp'); if (bEx) bEx.addEventListener('click', doExport);
+  const bIm = document.getElementById('btnImp'); if (bIm) bIm.addEventListener('click', () => document.getElementById('fImp').click());
+  const fI = document.getElementById('fImp'); if (fI) fI.addEventListener('change', doImport);
+  const bR = document.getElementById('btnRst'); if (bR) bR.addEventListener('click', doReset);
 }
 
 function attachWeekNavHandlers() {
   const btnP = document.getElementById('btnP');
   const btnN = document.getElementById('btnN');
-  if (btnP) btnP.onclick = () => navWk(-1);
-  if (btnN) btnN.onclick = () => navWk(1);
+  if (btnP && !btnP.dataset.bound) {
+    btnP.addEventListener('click', () => navWk(-1));
+    btnP.dataset.bound = 'true';
+  }
+  if (btnN && !btnN.dataset.bound) {
+    btnN.addEventListener('click', () => navWk(1));
+    btnN.dataset.bound = 'true';
+  }
 }
 
 let _nt = null, _np = null;
@@ -192,7 +205,7 @@ async function togDay(key) {
   planState.completedDays[key] = !planState.completedDays[key];
   const wn = parseInt(key.split('-')[0]);
   checkWeekCompletion(wn);
-  renderWk(CW);
+  await renderWk(CW);
   const ok = await dbSave();
   toast(ok ? (planState.completedDays[key] ? 'Leitura marcada' : 'Marcacao removida') : 'Erro - use botao Salvar');
 }
@@ -200,7 +213,7 @@ async function togDay(key) {
 async function togComp(wn) {
   planState.completedComplements[wn] = !planState.completedComplements[wn];
   checkWeekCompletion(wn);
-  renderWk(wn);
+  await renderWk(wn);
   const ok = await dbSave();
   toast(ok ? (planState.completedComplements[wn] ? 'Complementacao concluida' : 'Marcacao removida') : 'Erro - use botao Salvar');
 }
@@ -244,13 +257,17 @@ async function doImport(ev) {
       const check = validateImport(d);
       if (!check.valid) { toast(check.reason); return; }
       if (Object.prototype.hasOwnProperty.call(d, 'state')) {
-        const safeState = validateImportState(d.state);
-        Object.assign(planState, safeState);
+        const stateCheck = validateImportState(d.state);
+        if (!stateCheck.valid) {
+          toast('Backup invalido: ' + stateCheck.errors[0]);
+          return;
+        }
+        Object.assign(planState, d.state);
       }
       const notesResult = await importValidNotes(d.notes);
       const ok = await dbSave();
       if (ok) {
-        renderWk(CW);
+        await renderWk(CW);
         if (notesResult.ignored > 0) toast('Backup restaurado. ' + notesResult.ignored + ' anotacao(oes) ignorada(s) por dados invalidos.');
         else toast('Backup restaurado com sucesso');
       }
@@ -274,20 +291,6 @@ function validateImport(d) {
   return { valid: true };
 }
 
-function validateImportState(state) {
-  const safe = {};
-  if (state.completedDays && typeof state.completedDays === 'object' && !Array.isArray(state.completedDays)) {
-    safe.completedDays = state.completedDays;
-  }
-  if (state.completedComplements && typeof state.completedComplements === 'object' && !Array.isArray(state.completedComplements)) {
-    safe.completedComplements = state.completedComplements;
-  }
-  if (Number.isInteger(state.currentWeek) && state.currentWeek >= 1 && state.currentWeek <= TOTAL_WEEKS) {
-    safe.currentWeek = state.currentWeek;
-  }
-  return safe;
-}
-
 async function importValidNotes(notes) {
   let ignored = 0;
   if (!notes) return { ignored: ignored };
@@ -303,30 +306,35 @@ async function importValidNotes(notes) {
   return { ignored: ignored };
 }
 
-function doReset() {
+async function doReset() {
   if (confirm('Reiniciar marcacoes desta semana? Anotacoes mantidas.')) {
-    if (WEEKS_DATA[CW]) {
-      WEEKS_DATA[CW].days.forEach((_, i) => { delete planState.completedDays[CW + '-' + i]; });
+    const wk = await loadWeek(CW);
+    if (wk && Array.isArray(wk.days)) {
+      wk.days.forEach((_, i) => { delete planState.completedDays[CW + '-' + i]; });
     }
     delete planState.completedComplements[CW];
     if (planState.weekCompletionHistory) delete planState.weekCompletionHistory[CW];
-    dbSave(); renderWk(CW);
+    dbSave(); await renderWk(CW);
     toast('Semana reiniciada');
   }
 }
 
-async function init() {
+async function initApp() {
   const sp = document.getElementById('spinner');
   const pc = document.getElementById('page-content');
   try {
     if (sp) sp.classList.remove('hidden');
-    const user = await getUser();
-    if (!user) return;
+    const { data: { session } } = await sb().auth.getSession();
+    if (!session) {
+      window.location.href = 'index.html?err=session';
+      return;
+    }
+    const user = session.user;
     const ok = await dbLoad(user.id);
     
     injectAppShell('semanas');
     
-    if (!renderWk(getWkFromURL())) throw new Error('Semana nao encontrada');
+    if (!await renderWk(getWkFromURL())) throw new Error('Semana nao encontrada');
     if (pc) pc.classList.remove('hidden');
     document.body.classList.add('ready');
     const e = document.getElementById('uemail'); if (e) e.textContent = user.email;
@@ -344,15 +352,15 @@ function showInitError(msg) {
   const mc = document.getElementById('mc');
   if (pc) pc.classList.remove('hidden');
   document.body.classList.add('ready');
-  if (mc) mc.innerHTML = '<div class="phbox"><div style="font-size:1.3rem;color:var(--igd);margin-bottom:.7rem">*</div>' +
-    '<div style="font-size:.82rem;letter-spacing:.15em;color:var(--td)">ERRO AO CARREGAR</div>' +
-    '<div style="margin-top:.7rem;font-size:.84rem;color:var(--td);font-style:italic">' + esc(msg) + '</div>' +
-    '<button class="abtn" id="btnBack" style="margin-top:1.2rem">&larr; Voltar ao &Iacute;ndice</button></div>';
+  if (mc) mc.innerHTML = '<div class="phbox"><div class="init-error-icon">*</div>' +
+    '<div class="init-error-title">ERRO AO CARREGAR</div>' +
+    '<div class="init-error-msg">' + esc(msg) + '</div>' +
+    '<button class="abtn init-error-back" id="btnBack">&larr; Voltar ao &Iacute;ndice</button></div>';
   const bb = document.getElementById('btnBack');
-  if (bb) bb.onclick = () => location.href = 'index.html';
+  if (bb) bb.addEventListener('click', () => location.href = 'index.html');
   toast(msg);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  init();
+  initApp();
 });

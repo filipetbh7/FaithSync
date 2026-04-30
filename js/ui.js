@@ -1,6 +1,5 @@
 import { planState } from './state.js';
-import { TOTAL_CHAPTERS, TOTAL_WEEKS, AT_CHAPTERS, NT_CHAPTERS, BOOKS, WEEKS_INDEX } from './const.js';
-import { WEEKS_DATA } from './semanas.js';
+import { TOTAL_CHAPTERS, TOTAL_WEEKS, AT_CHAPTERS, NT_CHAPTERS, WEEKS_INDEX } from './const.js';
 import { getBook } from './utils.js';
 import { doLogout } from './db.js';
 
@@ -26,23 +25,6 @@ export function renderPH(wk) {
       const s = parseInt(parts[0]);
       const d = parseInt(parts[1]);
       let chNum = null;
-      if (typeof WEEKS_DATA !== 'undefined' && WEEKS_DATA[s]) {
-        const wd = WEEKS_DATA[s];
-        if (wd.days && wd.days[d] && wd.days[d].reading) {
-          const reading = wd.days[d].reading;
-          const bk = BOOKS.find(b => reading.startsWith(b[0]));
-          if (bk) {
-            const rest = reading.substring(bk[0].length).trim();
-            const match = rest.match(/\d+/);
-            if (match) chNum = bk[3] + parseInt(match[0]) - 1;
-            else chNum = bk[3];
-          }
-        }
-        if (chNum === null && wd.chaptersStart !== undefined) {
-          chNum = wd.chaptersStart + d;
-          if (wd.chaptersEnd !== undefined) chNum = Math.min(wd.chaptersEnd, chNum);
-        }
-      }
       if (chNum === null && typeof WEEKS_INDEX !== 'undefined') {
         const wi = WEEKS_INDEX.find(w => w.num === s);
         if (wi && wi.chaptersStart !== undefined) {
@@ -67,15 +49,15 @@ export function renderPH(wk) {
   setW('bat', patWidth); set('pat', patVal + '%');
   setW('bnt', pntWidth); set('pnt', pntVal + '%');
 
-  if (wk !== undefined && typeof WEEKS_DATA !== 'undefined') {
-    const wd = WEEKS_DATA[wk];
-    if (wd) {
+  if (wk !== undefined && typeof WEEKS_INDEX !== 'undefined') {
+    const wd = WEEKS_INDEX[wk - 1];
+    if (wd && wd.chaptersStart !== undefined) {
       const bk = getBook(wd.chaptersStart);
       let bkCh = 0;
       Object.keys(planState.completedDays).forEach(key => {
         if (!planState.completedDays[key]) return;
         const wn = parseInt(key.split('-')[0]);
-        const d2 = WEEKS_DATA[wn]; if (!d2) return;
+        const d2 = WEEKS_INDEX[wn - 1]; if (!d2 || d2.chaptersStart === undefined) return;
         if (getBook(d2.chaptersStart)[3] === bk[3]) bkCh++;
       });
       const bp = Math.min(100, Math.round(bkCh / bk[1] * 100));
@@ -106,6 +88,7 @@ export function buildAppShell(activePage) {
       <button class="tbtn${isAnotacoes}" data-nav="anotacoes.html" aria-label="Ir para Anota&ccedil;&otilde;es">Anota&ccedil;&otilde;es</button>
       <span class="tsep">|</span>
       <span class="uinf" id="uemail"></span>
+      <span class="usep" aria-hidden="true"></span>
       <button class="lout" id="btnLogout" aria-label="Sair da conta">sair</button>
     </nav>
     <div class="psec">
@@ -124,7 +107,7 @@ export function buildAppShell(activePage) {
             <div class="sbm"><div class="sbf fg" id="bbk"></div></div>
             <span class="spct" id="pbk">0%</span>
           </div>
-          <div style="font-size:.73rem;color:var(--ts);margin-top:.1rem" id="lbk">-</div>
+          <div class="book-label" id="lbk">-</div>
         </div>
         <div class="si2">
           <div class="sl2">Antigo Testamento</div>
@@ -132,7 +115,7 @@ export function buildAppShell(activePage) {
             <div class="sbm"><div class="sbf fb" id="bat" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso Antigo Testamento"></div></div>
             <span class="spct" id="pat">0%</span>
           </div>
-          <div style="font-size:.66rem;color:var(--td);margin-top:.1rem">929 cap&iacute;tulos</div>
+          <div class="chapter-note">929 cap&iacute;tulos</div>
         </div>
         <div class="si2">
           <div class="sl2">Novo Testamento</div>
@@ -140,13 +123,13 @@ export function buildAppShell(activePage) {
             <div class="sbm"><div class="sbf ft" id="bnt" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso Novo Testamento"></div></div>
             <span class="spct" id="pnt">0%</span>
           </div>
-          <div style="font-size:.66rem;color:var(--td);margin-top:.1rem">260 cap&iacute;tulos</div>
+          <div class="chapter-note">260 cap&iacute;tulos</div>
         </div>
       </div>
       <div class="bvb">
         <div class="bbdg" id="bbdg">-</div>
         <div>
-          <div class="bvt" id="bvt" style="color:var(--td)">Selecione uma semana.</div>
+          <div class="bvt muted" id="bvt">Selecione uma semana.</div>
           <div class="bvr" id="bvr"></div>
         </div>
       </div>
@@ -156,10 +139,10 @@ export function buildAppShell(activePage) {
 
 export function setupNav() {
   document.querySelectorAll('[data-nav]').forEach(b => {
-    b.onclick = () => window.location.href = b.dataset.nav;
+    b.addEventListener('click', () => window.location.href = b.dataset.nav);
   });
   const lo = document.getElementById('btnLogout');
-  if (lo) lo.onclick = doLogout;
+  if (lo) lo.addEventListener('click', doLogout);
 }
 
 export function injectAppShell(activePage) {

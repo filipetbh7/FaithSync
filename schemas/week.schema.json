@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://faithsync.local/schemas/week.schema.json",
+  "title": "FaithSync Week Content",
+  "type": "object",
+  "required": ["number", "title", "book", "days", "complement", "reflection"],
+  "additionalProperties": false,
+  "properties": {
+    "number": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 87
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "book": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$"
+    },
+    "visualType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visualData": {
+      "type": "object"
+    },
+    "skeleton": {
+      "type": "boolean"
+    },
+    "days": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["dayOfWeek", "reading", "context"],
+        "additionalProperties": false,
+        "properties": {
+          "dayOfWeek": { "type": "string", "minLength": 1 },
+          "reading": { "type": "string", "minLength": 1 },
+          "verses": { "type": "string" },
+          "context": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "complement": {
+      "type": "object",
+      "required": ["intro", "resources"],
+      "additionalProperties": false,
+      "properties": {
+        "intro": { "type": "string" },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "title", "items"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "type": "string", "minLength": 1 },
+              "title": { "type": "string", "minLength": 1 },
+              "items": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "reflection": {
+      "type": "object",
+      "required": ["verse", "reference", "question"],
+      "additionalProperties": false,
+      "properties": {
+        "verse": { "type": "string" },
+        "reference": { "type": "string" },
+        "question": { "type": "string" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["skeleton"],
+        "properties": { "skeleton": { "const": true } }
+      },
+      "then": {
+        "properties": {
+          "days": { "maxItems": 0 }
+        }
+      },
+      "else": {
+        "properties": {
+          "days": { "minItems": 6, "maxItems": 6 }
+        }
+      }
+    },
+    {
+      "if": { "required": ["visualType"] },
+      "then": { "required": ["visualData"] }
+    }
+  ]
+}

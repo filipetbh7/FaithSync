@@ -2,7 +2,7 @@ import { planState } from '../state.js';
 import { WEEKS_INDEX } from '../const.js';
 import { calculateWeekDates, checkWeekCompletion } from '../domain.js';
 import { renderPH, injectAppShell } from '../ui.js';
-import { fmtD, fmtDFull, toast } from '../utils.js';
+import { esc, fmtD, fmtDFull, toast } from '../utils.js';
 import { sb, dbLoad, dbSaveProgress, doLogout } from '../db.js';
 
 function goWeek(n) { location.href = "semanas.html?week=" + n; }
@@ -84,12 +84,12 @@ function renderIndex() {
     const wcClass = status === 'done' ? 'sd' : (status === 'prog' ? 'sp' : '');
     d.className = 'wc ' + wcClass;
     if (dates[w.num] && dates[w.num].delayed) d.classList.add('wc-delayed');
-    d.onclick = () => goWeek(w.num);
+    d.addEventListener('click', () => goWeek(w.num));
     let dateInfo = '';
-    if (dates[w.num]) {
-      const isDelayed = dates[w.num].delayed;
-      const delayedBadge = isDelayed ? '<span class="badge-delayed" style="margin-left: .5rem;">Atrasada</span>' : '';
-      dateInfo = `<div class="wcd">${fmtD(dates[w.num].dateStart)} - ${fmtD(dates[w.num].dateEnd)}${delayedBadge}</div>`;
+    if (w.ds && w.de) {
+      const isDelayed = dates[w.num] && dates[w.num].delayed;
+      const delayedBadge = isDelayed ? '<span class="badge-delayed">Atrasada</span>' : '';
+      dateInfo = `<div class="wcd">${fmtD(w.ds)} - ${fmtD(w.de)}${delayedBadge}</div>`;
     }
     d.innerHTML = `
       <div class="wch">
@@ -100,6 +100,7 @@ function renderIndex() {
       </div>
       ${dateInfo}
       <div class="wcr">${w.block}</div>
+      <div class="wcb">${esc(w.range || '')}</div>
       <div class="wca">Ver &rarr;</div>
     `;
     c.appendChild(d);
@@ -120,7 +121,7 @@ async function doLogin() {
     btn.textContent = 'Entrar';
     btn.disabled = false;
   } else {
-    initApp();
+    await initApp();
   }
 }
 
@@ -184,8 +185,8 @@ function setupModalHistory() {
             
             const compDateObj = new Date(entry.completedAt || entry);
             const compDateStr = fmtDFull(compDateObj);
-            const delayedBadge = entry.wasDelayed ? '<span class="badge-delayed" style="margin-left: .5rem;">Atrasada</span>' : '';
-            const daysStr = entry.daysElapsed ? \`<div style="font-size: .75rem; color: var(--ts); margin-top: .2rem;">Dias até concluir: \${entry.daysElapsed}</div>\` : '';
+            const delayedBadge = entry.wasDelayed ? '<span class="badge-delayed">Atrasada</span>' : '';
+            const daysStr = entry.daysElapsed ? \`<div class="history-days">Dias até concluir: \${entry.daysElapsed}</div>\` : '';
             
             const div = document.createElement('div');
             div.className = 'rb';
@@ -238,9 +239,8 @@ function setupModalMaterials() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('lbtn').addEventListener('click', doLogin);
-  document.getElementById('lpw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-  const lfrm = document.getElementById('lfrm'); if (lfrm) lfrm.addEventListener('submit', e => { e.preventDefault(); doLogin(); });
+  const lfrm = document.getElementById('lfrm');
+  if (lfrm) lfrm.addEventListener('submit', e => { e.preventDefault(); doLogin(); });
   document.getElementById('btn-start-plan').addEventListener('click', startPlanToday);
   document.getElementById('btn-reset-plan').addEventListener('click', resetCurrentPlan);
   setupModalHistory();
