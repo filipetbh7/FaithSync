@@ -6,6 +6,7 @@ import { esc, fmtD, fmtDFull, toast } from '../utils.js';
 import { sb, waitForSupabaseRuntime, dbLoad, dbSaveProgress } from '../db.js';
 
 const AUTH_TIMEOUT_MS = 7000;
+const DATA_TIMEOUT_MS = 7000;
 
 function goWeek(n) { location.href = "semanas.html?week=" + n; }
 
@@ -22,6 +23,11 @@ function finishLoading() {
   const spinner = document.getElementById('spinner');
   if (spinner) spinner.classList.add('hidden');
   document.body.classList.add('ready');
+}
+
+function showSpinner() {
+  const spinner = document.getElementById('spinner');
+  if (spinner) spinner.classList.remove('hidden');
 }
 
 function showLogin(message) {
@@ -169,9 +175,10 @@ async function doLogin() {
 }
 
 async function initApp() {
-  const spinner = document.getElementById('spinner');
+  const lscr = document.getElementById('lscr');
+  const iscr = document.getElementById('iscr');
   try {
-    if (spinner) spinner.classList.remove('hidden');
+    showSpinner();
     await waitForSupabaseRuntime();
     const { data: { session } } = await withTimeout(
       sb().auth.getSession(),
@@ -184,7 +191,16 @@ async function initApp() {
       return false;
     }
     const user = session.user;
-    const ok = await dbLoad(user.id);
+    let ok = false;
+    try {
+      ok = await withTimeout(
+        dbLoad(user.id),
+        DATA_TIMEOUT_MS,
+        'Tempo esgotado ao carregar dados do usuario.'
+      );
+    } catch (dataError) {
+      console.error('dbLoad:', dataError);
+    }
     if (lscr) lscr.classList.add('hidden');
     if (iscr) iscr.classList.remove('hidden');
     
@@ -279,12 +295,20 @@ function setupModalMaterials() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function bootstrapIndex() {
   const lfrm = document.getElementById('lfrm');
   if (lfrm) lfrm.addEventListener('submit', e => { e.preventDefault(); doLogin(); });
-  document.getElementById('btn-start-plan').addEventListener('click', startPlanToday);
-  document.getElementById('btn-reset-plan').addEventListener('click', resetCurrentPlan);
+  const startPlanBtn = document.getElementById('btn-start-plan');
+  const resetPlanBtn = document.getElementById('btn-reset-plan');
+  if (startPlanBtn) startPlanBtn.addEventListener('click', startPlanToday);
+  if (resetPlanBtn) resetPlanBtn.addEventListener('click', resetCurrentPlan);
   setupModalHistory();
   setupModalMaterials();
   initApp();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapIndex);
+} else {
+  bootstrapIndex();
+}
