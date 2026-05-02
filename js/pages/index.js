@@ -40,6 +40,24 @@ function showLogin(message) {
   finishLoading();
 }
 
+function showAuthenticatedShell(user) {
+  const lscr = document.getElementById('lscr');
+  const iscr = document.getElementById('iscr');
+  if (lscr) lscr.classList.add('hidden');
+  if (iscr) iscr.classList.remove('hidden');
+  injectAppShell('index');
+  const email = document.getElementById('uemail');
+  if (email) email.textContent = user.email || '';
+}
+
+function showIndexError(message) {
+  const c = document.getElementById('igc');
+  if (c) {
+    c.innerHTML = '<div class="empty-state"><p>' + esc(message) + '</p><p>Atualize a pagina ou tente novamente em instantes.</p></div>';
+  }
+  toast(message);
+}
+
 function planStartLabel() {
   if (!planState.planStartDate) return '';
   return 'Plano iniciado em ' + new Date(planState.planStartDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -150,7 +168,7 @@ async function doLogin() {
   btn.disabled = true;
   try {
     await waitForSupabaseRuntime();
-    const { error } = await withTimeout(
+    const { data, error } = await withTimeout(
       sb().auth.signInWithPassword({ email, password: pass }),
       AUTH_TIMEOUT_MS,
       'Tempo esgotado ao tentar entrar.'
@@ -159,12 +177,12 @@ async function doLogin() {
       err.textContent = 'E-mail ou senha incorretos.';
       btn.textContent = 'Entrar';
       btn.disabled = false;
+    } else if (data && data.session && data.user) {
+      await renderAuthenticatedIndex(data.user);
     } else {
-      const appStarted = await initApp();
-      if (!appStarted) {
-        btn.textContent = 'Entrar';
-        btn.disabled = false;
-      }
+      err.textContent = 'Login recebido, mas a sessao nao foi criada. Tente novamente.';
+      btn.textContent = 'Entrar';
+      btn.disabled = false;
     }
   } catch (error) {
     console.error('doLogin:', error);
@@ -174,9 +192,41 @@ async function doLogin() {
   }
 }
 
+async function renderAuthenticatedIndex(user) {
+  try {
+    showSpinner();
+    showAuthenticatedShell(user);
+    let ok = false;
+    try {
+      ok = await withTimeout(
+        dbLoad(user.id),
+        DATA_TIMEOUT_MS,
+        'Tempo esgotado ao carregar dados do usuario.'
+      );
+    } catch (dataError) {
+      console.error('dbLoad:', dataError);
+    }
+    try {
+      renderPH();
+      renderIndex();
+    } catch (renderError) {
+      console.error('renderIndex:', renderError);
+      showIndexError('Nao foi possivel renderizar o indice agora.');
+    }
+    finishLoading();
+    if (!ok) toast('Nao foi possivel carregar seus dados agora.');
+    return true;
+  } catch (error) {
+    console.error('renderAuthenticatedIndex:', error);
+    showAuthenticatedShell(user || {});
+    showIndexError('Voce entrou, mas nao foi possivel carregar o indice agora.');
+    return false;
+  } finally {
+    finishLoading();
+  }
+}
+
 async function initApp() {
-  const lscr = document.getElementById('lscr');
-  const iscr = document.getElementById('iscr');
   try {
     showSpinner();
     await waitForSupabaseRuntime();
@@ -190,28 +240,7 @@ async function initApp() {
       showLogin(sessionExpired ? 'Sessao expirada. Entre novamente.' : '');
       return false;
     }
-    const user = session.user;
-    let ok = false;
-    try {
-      ok = await withTimeout(
-        dbLoad(user.id),
-        DATA_TIMEOUT_MS,
-        'Tempo esgotado ao carregar dados do usuario.'
-      );
-    } catch (dataError) {
-      console.error('dbLoad:', dataError);
-    }
-    if (lscr) lscr.classList.add('hidden');
-    if (iscr) iscr.classList.remove('hidden');
-    
-    injectAppShell('index');
-    
-    const e = document.getElementById('uemail'); if (e) e.textContent = user.email;
-    renderPH();
-    renderIndex();
-    finishLoading();
-    if (!ok) toast('Nao foi possivel carregar seus dados agora.');
-    return true;
+    return await renderAuthenticatedIndex(session.user);
   } catch (error) {
     console.error('initApp:', error);
     showLogin('Nao foi possivel conectar. Verifique sua conexao e tente novamente.');

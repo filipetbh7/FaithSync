@@ -32,7 +32,13 @@ export function sb() {
     throw new Error('Supabase runtime indisponivel.');
   }
   if (!window._supabase) {
-    window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false
+      }
+    });
   }
   return window._supabase;
 }
