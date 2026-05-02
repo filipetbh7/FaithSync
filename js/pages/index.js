@@ -6,7 +6,19 @@ import { esc, fmtD, fmtDFull, toast } from '../utils.js';
 import { sb, waitForSupabaseRuntime, dbLoad, dbSaveProgress } from '../db.js';
 
 const AUTH_TIMEOUT_MS = 7000;
-const DATA_TIMEOUT_MS = 7000;
+const DATA_TIMEOUT_MS = 20000;
+const MATERIALS_REFERENCES = [
+  'BIBLIA Thompson. Edicao contemporanea. Sao Paulo: Editora Vida, 2024.',
+  'BIBLIA de Estudo Scofield. Sao Paulo: Editora Vida, 2020.',
+  'STERN, David H. Biblia Judaica Completa. Sao Paulo: Editora Vida, 2011.',
+  'DICIONARIO Biblico Crescer. Sao Paulo: Geografica Editora, 2010.',
+  'SOARES, Matheus. Enciclopedia da vida dos personagens biblicos. 3. ed. [S.l.]: [s.n.], 2018.',
+  'PENTECOST, J. Dwight. Manual de escatologia. Sao Paulo: Editora Vida, 2024.',
+  'LAHAYE, Tim. Enciclopedia popular de profecia biblica. Rio de Janeiro: CPAD, 2024.',
+  'LAHAYE, Tim; ICE, Thomas. Charting the End Times. Eugene, OR: Harvest House Publishers, 2021.',
+  'REINKE, Andre Daniel. Atlas ilustrado da Biblia. 3. ed. Rio de Janeiro: Thomas Nelson Brasil, 2024.',
+  'RASMUSSEN, Carl G. Zondervan Atlas of the Bible. Rev. ed. Grand Rapids, MI: Zondervan, 2010.'
+];
 
 function goWeek(n) { location.href = "semanas.html?week=" + n; }
 
@@ -28,6 +40,14 @@ function finishLoading() {
 function showSpinner() {
   const spinner = document.getElementById('spinner');
   if (spinner) spinner.classList.remove('hidden');
+}
+
+function showAuthChecking() {
+  const lscr = document.getElementById('lscr');
+  const iscr = document.getElementById('iscr');
+  if (lscr) lscr.classList.add('hidden');
+  if (iscr) iscr.classList.add('hidden');
+  showSpinner();
 }
 
 function showLogin(message) {
@@ -127,6 +147,7 @@ function renderIndex() {
   updatePlanControls();
   const c = document.getElementById('igc');
   if (!c) return;
+  c.classList.add('igrd');
   c.innerHTML = '';
   const dates = typeof calculateWeekDates === 'function' ? calculateWeekDates() || {} : {};
   WEEKS_INDEX.forEach(w => {
@@ -204,7 +225,7 @@ async function renderAuthenticatedIndex(user) {
         'Tempo esgotado ao carregar dados do usuario.'
       );
     } catch (dataError) {
-      console.error('dbLoad:', dataError);
+      console.warn('dbLoad:', dataError);
     }
     try {
       renderPH();
@@ -228,7 +249,7 @@ async function renderAuthenticatedIndex(user) {
 
 async function initApp() {
   try {
-    showSpinner();
+    showAuthChecking();
     await waitForSupabaseRuntime();
     const { data: { session } } = await withTimeout(
       sb().auth.getSession(),
@@ -306,6 +327,10 @@ function setupModalMaterials() {
   const btn = document.getElementById('btn-materials');
   const modal = document.getElementById('modal-materials');
   const closeBtn = modal?.querySelector('.modal-close');
+  const list = modal?.querySelector('ol');
+  if (list) {
+    list.innerHTML = MATERIALS_REFERENCES.map(item => '<li>' + esc(item) + '</li>').join('');
+  }
   
   if (btn && modal) {
     btn.addEventListener('click', () => {

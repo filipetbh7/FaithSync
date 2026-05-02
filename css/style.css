@@ -56,11 +56,14 @@ footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-
 .fi{animation:fi .35s ease both;}
 .modal { position:fixed; inset:0; background:rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; z-index:1000; }
 .modal-content { background:var(--pm); border:1px solid var(--bo); border-radius:8px; padding:1.5rem; max-width:500px; width:90%; max-height:80vh; overflow-y:auto; position:relative; }
+#modal-materials .modal-content{max-width:860px;}
 .modal-close { position:absolute; top:.5rem; right:.5rem; background:none; border:none; color:var(--ts); cursor:pointer; font-size:1.2rem; }
 .btn-text { background:none; border:none; color:var(--ts); cursor:pointer; font-size:.8rem; text-decoration:underline; }
 .modal-content h2 { color:var(--igb); font-size:1.2rem; margin-bottom:1rem; }
 .modal-content ol { color:var(--ts); font-size:.85rem; line-height:1.6; padding-left:1.5rem; text-align:left; }
 .modal-content li { margin-bottom:.4rem; }
+#modal-materials ol{columns:1;column-gap:2rem;}
+#modal-materials li{break-inside:avoid;}
 /* Index */
 .lscr{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
 .llogo{width:min(260px,78vw);border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.5);margin-bottom:1.8rem;}
@@ -241,6 +244,7 @@ footer{text-align:center;padding:1.8rem;font-size:.67rem;color:var(--td);border-
   .igrd{grid-template-columns:repeat(3,1fr);}
   .dgrd{grid-template-columns:repeat(2,1fr);}
   .rgrd{grid-template-columns:repeat(2,1fr);}
+  #modal-materials ol{columns:2;}
 }
 
 /* Desktop */

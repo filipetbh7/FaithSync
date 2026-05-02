@@ -11,18 +11,14 @@ function getWeekFile(weekNumber) {
 }
 
 async function fetchWeekJson(weekFile) {
-  const paths = [
-    '/FaithSync/data/weeks/' + weekFile + '.json',
-    'data/weeks/' + weekFile + '.json'
-  ];
+  const path = new URL('../data/weeks/' + weekFile + '.json', import.meta.url);
 
-  for (const path of paths) {
-    try {
-      const response = await fetch(path);
-      if (response.ok) return await response.json();
-    } catch (err) {
-      console.warn('Week content fetch failed:', path, err);
-    }
+  try {
+    const response = await fetch(path);
+    if (response.ok) return await response.json();
+    console.warn('Week content fetch failed:', response.status, path.href);
+  } catch (err) {
+    console.warn('Week content fetch failed:', path.href, err);
   }
 
   return null;
