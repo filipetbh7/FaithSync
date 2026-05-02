@@ -272,17 +272,17 @@ function setupModalHistory() {
             const compDateObj = new Date(entry.completedAt || entry);
             const compDateStr = fmtDFull(compDateObj);
             const delayedBadge = entry.wasDelayed ? '<span class="badge-delayed">Atrasada</span>' : '';
-            const daysStr = entry.daysElapsed ? \`<div class="history-days">Dias até concluir: \${entry.daysElapsed}</div>\` : '';
+            const daysStr = entry.daysElapsed ? `<div class="history-days">Dias até concluir: ${entry.daysElapsed}</div>` : '';
             
             const div = document.createElement('div');
             div.className = 'rb';
-            div.innerHTML = \`
-              <div class="rsrc">Semana \${wk} &mdash; \${title}</div>
+            div.innerHTML = `
+              <div class="rsrc">Semana ${wk} &mdash; ${title}</div>
               <div class="rcnt">
-                <div>Concluída em: \${compDateStr}\${delayedBadge}</div>
-                \${daysStr}
+                <div>Concluída em: ${compDateStr}${delayedBadge}</div>
+                ${daysStr}
               </div>
-            \`;
+            `;
             list.appendChild(div);
           });
         }
