@@ -4,10 +4,21 @@ import { loadWeek } from '../content-loader.js';
 import { calculateWeekDates, checkWeekCompletion } from '../domain.js';
 import { renderPH, injectAppShell } from '../ui.js';
 import { esc, fmtD, fmtDFull, isToday, toast } from '../utils.js';
-import { sb, dbLoad, dbSave, dbSaveNote } from '../db.js';
+import { sb, waitForSupabaseRuntime, dbLoad, dbSave, dbSaveNote } from '../db.js';
 import { validateImportState } from '../validators.js';
 
+const AUTH_TIMEOUT_MS = 7000;
+const DATA_TIMEOUT_MS = 20000;
 let CW = 32;
+
+function withTimeout(promise, timeoutMs, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(message)), timeoutMs);
+    })
+  ]);
+}
 
 function getWkFromURL() {
   const p = new URLSearchParams(location.search);
@@ -39,7 +50,16 @@ async function renderWk(wn) {
   }
   mc.innerHTML = renderDays(wk) + renderVisual(wk) + renderComplement(wk) + renderReflection(wk) + renderNoteSection(wn);
   attachWeekHandlers();
+  preloadAdjacentWeeks(wn);
   return true;
+}
+
+function preloadAdjacentWeeks(wn) {
+  [wn - 1, wn + 1].forEach((nextWeek) => {
+    if (nextWeek >= 1 && nextWeek <= TOTAL_WEEKS) {
+      loadWeek(nextWeek).catch(() => {});
+    }
+  });
 }
 
 function renderWeekHeader(wn, wi, wk) {
@@ -324,20 +344,27 @@ async function initApp() {
   const pc = document.getElementById('page-content');
   try {
     if (sp) sp.classList.remove('hidden');
-    const { data: { session } } = await sb().auth.getSession();
+    await waitForSupabaseRuntime();
+    const { data: { session } } = await withTimeout(
+      sb().auth.getSession(),
+      AUTH_TIMEOUT_MS,
+      'Tempo esgotado ao verificar a sessao.'
+    );
     if (!session) {
       window.location.href = 'index.html?err=session';
       return;
     }
     const user = session.user;
-    const ok = await dbLoad(user.id);
-    
     injectAppShell('semanas');
-    
-    if (!await renderWk(getWkFromURL())) throw new Error('Semana nao encontrada');
+    const e = document.getElementById('uemail'); if (e) e.textContent = user.email;
     if (pc) pc.classList.remove('hidden');
     document.body.classList.add('ready');
-    const e = document.getElementById('uemail'); if (e) e.textContent = user.email;
+    const ok = await withTimeout(
+      dbLoad(user.id),
+      DATA_TIMEOUT_MS,
+      'Tempo esgotado ao carregar dados do usuario.'
+    );
+    if (!await renderWk(getWkFromURL())) throw new Error('Semana nao encontrada');
     if (!ok) toast('Erro ao carregar dados. Verifique sua conexao.');
   } catch (err) {
     console.error('init semanas:', err);

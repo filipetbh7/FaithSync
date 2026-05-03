@@ -1,5 +1,83 @@
 # Code Review FaithSync Pos-JSON - 2026-04-30
 
+## Atualizacao de refinamento visual e shell compartilhado - 2026-05-02
+
+Novas evidencias:
+
+- A pagina Anotacoes ainda exibia "Livro Atual" e a frase "Selecione uma semana".
+- No Indice, o estado "Em andamento" dos cards estava muito proximo do tom ornamental do design e nao destacava bem o progresso em curso.
+- Os modais de apagar plano e apagar anotacoes estavam visualmente corretos, mas os textos estavam sem acentuacao.
+- O botao "Materiais de Estudo" usava emoji, destoando do estilo ornamental do projeto.
+
+Confirmacao na documentacao:
+
+- `docs/FAITHSYNC_PLAN.md` descreve `index.html` como pagina inicial de progresso global, login e historico.
+- `docs/FAITHSYNC_PLAN.md` descreve `anotacoes.html` como central de anotacoes global.
+- Portanto, "Livro Atual" e a frase "Selecione uma semana" pertencem somente ao contexto de `semanas.html`, onde ha uma semana/livro em foco.
+
+Correcoes aplicadas:
+
+- `js/ui.js`: `buildAppShell()` passou a renderizar "Livro Atual" e o bloco "Selecione uma semana" apenas quando `activePage === 'semanas'`; Indice e Anotacoes usam o mesmo resumo global com AT/NT expandido.
+- `css/style.css`: `psts2-summary` substitui a regra especifica do Indice para que Indice e Anotacoes absorvam corretamente o espaco do bloco removido.
+- `css/style.css`: o estado "Em andamento" recebeu amarelo mais evidente em legenda, bolinha de status, borda, faixa superior e sombra suave do card. "Nao iniciado" e "Concluido" foram preservados.
+- `js/pages/index.js` e `js/pages/anotacoes.js`: textos dos modais passaram a usar escapes Unicode, garantindo acentos corretos no browser sem depender da codificacao do arquivo.
+- `index.html` e `css/style.css`: o emoji de "Materiais de Estudo" foi trocado por ornamento textual (`&#10022;`) alinhado ao estilo do projeto.
+
+Validacoes feitas:
+
+- `node --check js/ui.js`: passou.
+- `node --check js/pages/index.js`: passou.
+- `node --check js/pages/anotacoes.js`: passou.
+- Validacao estatica de `buildAppShell()` confirmou que Indice e Anotacoes nao renderizam "Livro Atual" nem "Selecione uma semana", enquanto Semanas continua renderizando ambos.
+
+## Atualizacao de UX, performance e modais - 2026-05-02
+
+Novas evidencias apos sincronizacao com producao:
+
+- A correcao publicada no GitHub Pages resolveu o erro de sintaxe e a tela de login voltou a carregar.
+- Semanas e Anotacoes apresentavam atraso perceptivel no primeiro acesso; depois a navegacao ficava fluida.
+- Ao voltar de Semanas/Anotacoes para o Indice com usuario autenticado, o login ainda piscava brevemente.
+- No Indice, o bloco "Livro Atual" e o texto "Selecione uma semana" nao eram necessarios; a documentacao descreve o Indice como tela de progresso global, login e historico, enquanto o livro atual pertence ao contexto de Semanas.
+- Ao iniciar o plano, o label "Plano iniciado em ..." ficava sem acabamento visual e os cards do Indice continuavam usando as datas estaticas do indice, apesar de Semanas ja usar `calculateWeekDates()`.
+- As acoes de apagar plano e apagar anotacoes usavam `confirm()` nativo do navegador, fora do design do projeto.
+
+Causa e avaliacao:
+
+- O atraso inicial de Semanas/Anotacoes era principalmente cold start de rede/runtime: CDN Supabase sem `async`, conexao inicial com Supabase e primeiro fetch de JSON/modulos. Nao foi encontrado loop pesado ou processamento local proporcional ao volume de semanas.
+- O flash do login acontecia porque `index.html` precisa nascer com login visivel para fallback sem sessao/sem JS, mas usuarios autenticados ainda viam esse DOM antes do modulo `js/pages/index.js` esconder a tela.
+- Os cards do Indice tinham duas origens de data: `WEEKS_INDEX.ds/de` para cards e `calculateWeekDates()` para Semanas. Isso causava divergencia apos `planStartDate`.
+- `renderPH()` era compartilhado, mas o shell nao distinguia visualmente Indice de Semanas para a area de livro atual.
+
+Correcoes aplicadas:
+
+- `index.html`: adicionados `preconnect` para jsDelivr e Supabase e carregamento de `js/auth-boot.js`.
+- `js/auth-boot.js`: nova sonda curta de token Supabase em `localStorage`; se houver sessao provavel, aplica `html.auth-probe` para esconder o login durante o bootstrap e remove a classe automaticamente se o app nao assumir a tela.
+- `css/style.css`: `html.auth-probe body:not(.ready) .lscr` evita o flash visual do login; `plan-start-chip` estiliza a data de inicio; `psts2-summary` faz AT/NT ocuparem o espaco do bloco removido; adicionados estilos do modal de confirmacao.
+- `semanas.html` e `anotacoes.html`: CDN Supabase passou a `async`, com `preconnect`; conteudo inicial ganhou estado textual de carregamento.
+- `js/pages/semanas.js`: passou a esperar `waitForSupabaseRuntime()`, usa timeout em Auth/dados, revela o shell antes do carregamento mais lento terminar e pre-carrega semanas adjacentes apos renderizar a semana atual.
+- `js/pages/anotacoes.js`: passou a esperar `waitForSupabaseRuntime()`, usa timeout em Auth/dados, revela o shell antes do carregamento mais lento terminar e removeu o `onclick`/`confirm()` do botao de apagar anotacoes.
+- `js/ui.js`: `buildAppShell('index')` nao renderiza mais "Livro Atual" nem o bloco "Selecione uma semana"; Semanas continua com a apresentacao atual. Tambem foi criado `confirmAction()`, modal reutilizavel com `role="dialog"`, `aria-modal`, Escape, clique fora, foco inicial e retorno de foco.
+- `js/pages/index.js`: cards do Indice agora usam `calculateWeekDates()` quando existe plano iniciado, mantendo fallback para `WEEKS_INDEX.ds/de`; ao clicar em "Iniciar Plano Hoje", a UI renderiza imediatamente e reverte se o salvamento falhar; "Apagar Plano Atual" agora usa `confirmAction()`.
+- `js/pages/anotacoes.js`: "Apagar Todas as Anotacoes" agora usa `confirmAction()`, apaga sem reload e re-renderiza a lista.
+
+Validacoes feitas:
+
+- `node --check js/pages/index.js`: passou.
+- `node --check js/pages/semanas.js`: passou.
+- `node --check js/pages/anotacoes.js`: passou.
+- `node --check js/ui.js`: passou.
+- `node --check js/auth-boot.js`: passou.
+- Busca por `confirm(` confirmou que Indice e Anotacoes nao usam mais confirmacao nativa; ainda existem confirms em Semanas para restaurar backup e reiniciar semana, fora do escopo desta rodada.
+
+Validacao manual recomendada:
+
+1. Em producao, com sessao ativa, abrir Semanas > Indice e confirmar que a tela de login nao pisca.
+2. Abrir Semanas e Anotacoes em aba fria ou apos limpar cache; o primeiro acesso pode depender da rede, mas a estrutura da pagina deve aparecer antes da carga final de dados/conteudo.
+3. No Indice, confirmar que aparecem apenas Antigo Testamento e Novo Testamento na segunda linha de progresso.
+4. No Indice, confirmar ausencia do texto "Selecione uma semana".
+5. Clicar em "Iniciar Plano Hoje" e confirmar que o chip de data segue o design e que as datas dos cards mudam junto com as datas exibidas dentro de Semanas.
+6. Clicar em "Apagar Plano Atual" e "Apagar Todas as Anotacoes" e confirmar que ambos usam modal do projeto, nao janela nativa do navegador.
+
 ## Atualizacao de producao GitHub Pages - 2026-05-02
 
 Nova evidencia informada pelo usuario:

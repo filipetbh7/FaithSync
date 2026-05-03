@@ -1,8 +1,20 @@
 import { weekNotes } from '../state.js';
 import { WEEKS_INDEX } from '../const.js';
-import { renderPH, injectAppShell } from '../ui.js';
+import { confirmAction, renderPH, injectAppShell } from '../ui.js';
 import { esc, fmtD, toast } from '../utils.js';
-import { getUser, dbLoad, dbDeleteAllNotes } from '../db.js';
+import { getUser, waitForSupabaseRuntime, dbLoad, dbDeleteAllNotes } from '../db.js';
+
+const AUTH_TIMEOUT_MS = 7000;
+const DATA_TIMEOUT_MS = 20000;
+
+function withTimeout(promise, timeoutMs, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(message)), timeoutMs);
+    })
+  ]);
+}
 
 function renderNotes() {
   const c = document.getElementById('nl');
@@ -12,21 +24,8 @@ function renderNotes() {
   if (btnDelete) {
     if (wks.length > 0) {
       btnDelete.removeAttribute('disabled');
-      btnDelete.onclick = async () => {
-        if (confirm("Apagar todas as anotações? Esta ação não pode ser desfeita.")) {
-          btnDelete.disabled = true;
-          const ok = await dbDeleteAllNotes();
-          if (ok) {
-            location.reload();
-          } else {
-            if (typeof toast === 'function') toast('Erro ao apagar anotações.');
-            btnDelete.disabled = false;
-          }
-        }
-      };
     } else {
       btnDelete.setAttribute('disabled', 'true');
-      btnDelete.onclick = null;
     }
   }
 
@@ -48,7 +47,34 @@ function renderNotes() {
   });
   c.innerHTML = h;
   document.querySelectorAll('.neh,.nel').forEach(el => {
-    el.onclick = (ev) => { ev.stopPropagation(); location.href = 'semanas.html?week=' + el.dataset.week; };
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      location.href = 'semanas.html?week=' + el.dataset.week;
+    });
+  });
+}
+
+function setupDeleteNotesHandler() {
+  const btnDelete = document.getElementById('btn-delete-notes');
+  if (!btnDelete) return;
+  btnDelete.addEventListener('click', async () => {
+    if (btnDelete.disabled) return;
+    const ok = await confirmAction({
+      title: 'Apagar anota\u00e7\u00f5es',
+      message: 'Todas as anota\u00e7\u00f5es do plano ser\u00e3o removidas. Esta a\u00e7\u00e3o n\u00e3o pode ser desfeita.',
+      confirmLabel: 'Apagar anota\u00e7\u00f5es',
+      danger: true
+    });
+    if (!ok) return;
+    btnDelete.disabled = true;
+    const deleted = await dbDeleteAllNotes();
+    if (deleted) {
+      renderNotes();
+      toast('Anota\u00e7\u00f5es apagadas.');
+    } else {
+      toast('Erro ao apagar anota\u00e7\u00f5es.');
+      btnDelete.disabled = false;
+    }
   });
 }
 
@@ -57,17 +83,25 @@ async function init() {
   const pc = document.getElementById('page-content');
   try {
     if (sp) sp.classList.remove('hidden');
-    const user = await getUser();
+    await waitForSupabaseRuntime();
+    const user = await withTimeout(
+      getUser(),
+      AUTH_TIMEOUT_MS,
+      'Tempo esgotado ao verificar a sessao.'
+    );
     if (!user) return;
-    const ok = await dbLoad(user.id);
-    
     injectAppShell('anotacoes');
-    
     const e = document.getElementById('uemail'); if (e) e.textContent = user.email;
-    renderPH();
-    renderNotes();
+    setupDeleteNotesHandler();
     if (pc) pc.classList.remove('hidden');
     document.body.classList.add('ready');
+    const ok = await withTimeout(
+      dbLoad(user.id),
+      DATA_TIMEOUT_MS,
+      'Tempo esgotado ao carregar anotacoes.'
+    );
+    renderPH();
+    renderNotes();
     if (!ok) toast('Erro ao carregar dados. Verifique sua conexao.');
   } catch (err) {
     console.error('init anotacoes:', err);

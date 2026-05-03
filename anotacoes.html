@@ -8,8 +8,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FaithSync">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://shhtdamjxoxxxsyeqhhi.supabase.co">
 <link rel="stylesheet" href="css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.1/dist/umd/supabase.min.js" integrity="sha384-sfbOag7cEcqn2DK53T/iBNAH/2cMCf7bSzJDwBhV117A0z/NIj9Usei1jKIBY1Ae" crossorigin="anonymous"></script>
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.1/dist/umd/supabase.min.js" integrity="sha384-sfbOag7cEcqn2DK53T/iBNAH/2cMCf7bSzJDwBhV117A0z/NIj9Usei1jKIBY1Ae" crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="spinner" id="spinner"></div>
@@ -17,7 +19,7 @@
 <div id="app-shell"></div>
 <div class="npg">
   <div class="nphdr"><div><div class="npttl">Anota&ccedil;&otilde;es do Plano</div><div class="npsub">Apenas leitura | Edite na p&aacute;gina de cada semana | Ordenadas por semana do plano</div></div><button id="btn-delete-notes" class="abtn danger" disabled>Apagar Todas as Anotações</button></div>
-  <div id="nl"></div>
+  <div id="nl"><div class="empty-state">Carregando anota&ccedil;&otilde;es...</div></div>
 </div>
 <div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
 <footer>FaithSync | Sincronizando a f&eacute; em fam&iacute;lia</footer>

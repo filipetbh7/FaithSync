@@ -8,8 +8,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FaithSync">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://shhtdamjxoxxxsyeqhhi.supabase.co">
 <link rel="stylesheet" href="css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.1/dist/umd/supabase.min.js" integrity="sha384-sfbOag7cEcqn2DK53T/iBNAH/2cMCf7bSzJDwBhV117A0z/NIj9Usei1jKIBY1Ae" crossorigin="anonymous"></script>
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.1/dist/umd/supabase.min.js" integrity="sha384-sfbOag7cEcqn2DK53T/iBNAH/2cMCf7bSzJDwBhV117A0z/NIj9Usei1jKIBY1Ae" crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="spinner" id="spinner"></div>
@@ -23,7 +25,7 @@
 </div>
 <div class="wlbl"><div class="wlblm" id="wkttl">-</div><div class="wlbls" id="wksub">-</div></div>
 <div id="delay-banner-container" style="max-width:900px; margin: 1rem auto 0; padding: 0 2rem;"></div>
-<main class="mc" id="mc"></main>
+<main class="mc" id="mc"><div class="empty-state">Carregando semana...</div></main>
 <div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
 <footer>FaithSync | Sincronizando a f&eacute; em fam&iacute;lia</footer>
 <script type="module" src="js/pages/semanas.js"></script>

@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FaithSync">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://shhtdamjxoxxxsyeqhhi.supabase.co">
+<script src="js/auth-boot.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.1/dist/umd/supabase.min.js" integrity="sha384-sfbOag7cEcqn2DK53T/iBNAH/2cMCf7bSzJDwBhV117A0z/NIj9Usei1jKIBY1Ae" crossorigin="anonymous"></script>
 </head>
@@ -27,7 +30,7 @@
   <div id="app-shell"></div>
   <div class="plan-controls">
     <button id="btn-start-plan" class="abtn sv">Iniciar Plano Hoje</button>
-    <span id="plan-start-info" class="hidden"></span>
+    <span id="plan-start-info" class="plan-start-chip hidden"></span>
     <button id="btn-history" class="btn-text hidden">📅 Histórico</button>
     <button id="btn-reset-plan" class="abtn danger" disabled>Apagar Plano Atual</button>
   </div>
@@ -37,7 +40,7 @@
   </div>
   <div id="igc" class="igrd"></div>
   <div class="history-actions">
-    <button id="btn-materials" class="btn-text">📚 Materiais de Estudo</button>
+    <button id="btn-materials" class="btn-text study-materials-btn"><span class="btn-text-icon" aria-hidden="true">&#10022;</span>Materiais de Estudo</button>
   </div>
   <div id="modal-history" class="modal hidden">
     <div class="modal-content">

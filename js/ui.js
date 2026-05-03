@@ -73,6 +73,25 @@ export function buildAppShell(activePage) {
   const isIndex = activePage === 'index' ? ' act' : '';
   const isSemanas = activePage === 'semanas' ? ' act' : '';
   const isAnotacoes = activePage === 'anotacoes' ? ' act' : '';
+  const isWeekPage = activePage === 'semanas';
+  const progressDetailClass = isWeekPage ? 'psts2' : 'psts2 psts2-summary';
+  const bookProgress = isWeekPage ? `
+        <div class="si2">
+          <div class="sl2">Livro Atual</div>
+          <div class="sbw">
+            <div class="sbm"><div class="sbf fg" id="bbk"></div></div>
+            <span class="spct" id="pbk">0%</span>
+          </div>
+          <div class="book-label" id="lbk">-</div>
+        </div>` : '';
+  const bookVerse = isWeekPage ? `
+      <div class="bvb">
+        <div class="bbdg" id="bbdg">-</div>
+        <div>
+          <div class="bvt muted" id="bvt">Selecione uma semana.</div>
+          <div class="bvr" id="bvr"></div>
+        </div>
+      </div>` : '';
 
   return `
     <header class="hdr">
@@ -100,15 +119,8 @@ export function buildAppShell(activePage) {
         <div class="si"><span class="sv" id="sst">0</span><span class="sl">Dias seguidos</span></div>
       </div>
       <div class="sdiv"></div>
-      <div class="psts2">
-        <div class="si2">
-          <div class="sl2">Livro Atual</div>
-          <div class="sbw">
-            <div class="sbm"><div class="sbf fg" id="bbk"></div></div>
-            <span class="spct" id="pbk">0%</span>
-          </div>
-          <div class="book-label" id="lbk">-</div>
-        </div>
+      <div class="${progressDetailClass}">
+        ${bookProgress}
         <div class="si2">
           <div class="sl2">Antigo Testamento</div>
           <div class="sbw">
@@ -126,15 +138,84 @@ export function buildAppShell(activePage) {
           <div class="chapter-note">260 cap&iacute;tulos</div>
         </div>
       </div>
-      <div class="bvb">
-        <div class="bbdg" id="bbdg">-</div>
-        <div>
-          <div class="bvt muted" id="bvt">Selecione uma semana.</div>
-          <div class="bvr" id="bvr"></div>
-        </div>
+      ${bookVerse}
+    </div>
+  `;
+}
+
+let confirmState = null;
+
+function ensureConfirmDialog() {
+  let modal = document.getElementById('app-confirm-modal');
+  if (modal) return modal;
+
+  modal = document.createElement('div');
+  modal.id = 'app-confirm-modal';
+  modal.className = 'modal confirm-modal hidden';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'app-confirm-title');
+  modal.innerHTML = `
+    <div class="modal-content confirm-content">
+      <button class="modal-close" type="button" data-confirm-cancel aria-label="Fechar">&times;</button>
+      <h2 id="app-confirm-title"></h2>
+      <p id="app-confirm-message" class="confirm-message"></p>
+      <div class="confirm-actions">
+        <button class="abtn" type="button" data-confirm-cancel>Cancelar</button>
+        <button class="abtn danger" type="button" data-confirm-ok>Confirmar</button>
       </div>
     </div>
   `;
+  document.body.appendChild(modal);
+
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal || event.target.closest('[data-confirm-cancel]')) {
+      closeConfirmDialog(false);
+    }
+    if (event.target.closest('[data-confirm-ok]')) {
+      closeConfirmDialog(true);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && confirmState) closeConfirmDialog(false);
+  });
+
+  return modal;
+}
+
+function closeConfirmDialog(result) {
+  if (!confirmState) return;
+  const { modal, resolve, previousFocus } = confirmState;
+  modal.classList.add('hidden');
+  confirmState = null;
+  if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+  resolve(result);
+}
+
+export function confirmAction(options) {
+  const modal = ensureConfirmDialog();
+  const title = modal.querySelector('#app-confirm-title');
+  const message = modal.querySelector('#app-confirm-message');
+  const okBtn = modal.querySelector('[data-confirm-ok]');
+  const cancelBtn = modal.querySelector('.confirm-actions [data-confirm-cancel]');
+
+  title.textContent = options.title || 'Confirmar a\u00e7\u00e3o';
+  message.textContent = options.message || '';
+  okBtn.textContent = options.confirmLabel || 'Confirmar';
+  cancelBtn.textContent = options.cancelLabel || 'Cancelar';
+  okBtn.classList.toggle('danger', options.danger !== false);
+
+  modal.classList.remove('hidden');
+
+  return new Promise((resolve) => {
+    confirmState = {
+      modal,
+      resolve,
+      previousFocus: document.activeElement
+    };
+    okBtn.focus();
+  });
 }
 
 export function setupNav() {

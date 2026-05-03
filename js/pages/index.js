@@ -1,7 +1,7 @@
 import { planState } from '../state.js';
 import { WEEKS_INDEX } from '../const.js';
 import { calculateWeekDates } from '../domain.js';
-import { renderPH, injectAppShell } from '../ui.js';
+import { confirmAction, renderPH, injectAppShell } from '../ui.js';
 import { esc, fmtD, fmtDFull, toast } from '../utils.js';
 import { sb, waitForSupabaseRuntime, dbLoad, dbSaveProgress } from '../db.js';
 
@@ -111,19 +111,24 @@ async function startPlanToday() {
   if (planState.planStartDate) return;
   planState.planStartDate = new Date().toISOString();
   if (btn) btn.disabled = true;
+  renderIndex();
   const ok = await dbSaveProgress();
   if (!ok) {
     planState.planStartDate = null;
-    updatePlanControls();
+    renderIndex();
     toast('Nao foi possivel salvar o inicio do plano.');
     return;
   }
-  updatePlanControls();
   renderIndex();
 }
 
 async function resetCurrentPlan() {
-  const ok = confirm('Apagar plano? Todo o progresso, histórico e dias marcados serão removidos. As anotações serão mantidas. Esta ação não pode ser desfeita.');
+  const ok = await confirmAction({
+    title: 'Apagar plano atual',
+    message: 'Todo o progresso, hist\u00f3rico e dias marcados ser\u00e3o removidos. As anota\u00e7\u00f5es ser\u00e3o mantidas. Esta a\u00e7\u00e3o n\u00e3o pode ser desfeita.',
+    confirmLabel: 'Apagar plano',
+    danger: true
+  });
   if (!ok) return;
   planState.planStartDate = null;
   planState.completedDays = {};
@@ -158,10 +163,13 @@ function renderIndex() {
     if (dates[w.num] && dates[w.num].delayed) d.classList.add('wc-delayed');
     d.addEventListener('click', () => goWeek(w.num));
     let dateInfo = '';
-    if (w.ds && w.de) {
-      const isDelayed = dates[w.num] && dates[w.num].delayed;
+    const weekDates = dates && dates[w.num] ? dates[w.num] : null;
+    const dateStart = weekDates ? weekDates.dateStart : w.ds;
+    const dateEnd = weekDates ? weekDates.dateEnd : w.de;
+    if (dateStart && dateEnd) {
+      const isDelayed = weekDates && weekDates.delayed;
       const delayedBadge = isDelayed ? '<span class="badge-delayed">Atrasada</span>' : '';
-      dateInfo = `<div class="wcd">${fmtD(w.ds)} - ${fmtD(w.de)}${delayedBadge}</div>`;
+      dateInfo = `<div class="wcd">${fmtD(dateStart)} - ${fmtD(dateEnd)}${delayedBadge}</div>`;
     }
     d.innerHTML = `
       <div class="wch">
